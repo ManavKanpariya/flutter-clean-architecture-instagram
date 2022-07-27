@@ -206,87 +206,82 @@ class _ShowNotificationsState extends State<_ShowNotifications> {
           ),
         );
       },
-      child: Padding(
-        padding: const EdgeInsetsDirectional.only(start: 15, top: 15, end: 15),
-        child: Row(children: [
-          CircleAvatar(
-            backgroundColor: ColorManager.customGrey,
-            backgroundImage: CachedNetworkImageProvider(
-                notificationInfo.personalProfileImageUrl),
-            child: null,
-            radius: bodyHeight * .040,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text.rich(
+      child: Row(children: [
+        CircleAvatar(
+          backgroundColor: ColorManager.customGrey,
+          backgroundImage: CachedNetworkImageProvider(
+              notificationInfo.personalProfileImageUrl),
+          child: null,
+          radius: bodyHeight * .040,
+        ),
+        const SizedBox(width: 10),
+        Text.rich(
+          TextSpan(
+            children: <TextSpan>[
               TextSpan(
-                children: <TextSpan>[
-                  TextSpan(
-                    text: "${notificationInfo.personalUserName} ",
-                    style: Theme.of(context).textTheme.headline2,
-                  ),
-                  if (hashOfUserName.isNotEmpty) ...[
-                    TextSpan(
-                      text: "${hashOfUserName[0]} ",
-                      style: Theme.of(context).textTheme.bodyText1,
-                    ),
-                    TextSpan(
-                      text: "${hashOfUserName[1]} ",
-                      style: getNormalStyle(color: ColorManager.blue),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () async {
-                          String userName =
-                              hashOfUserName[1].replaceAll('@', '');
-                          await Navigator.of(
-                            context,
-                          ).push(CupertinoPageRoute(
-                              builder: (context) => WhichProfilePage(
-                                    userName: userName,
-                                  ),
-                              maintainState: false));
-                        },
-                    ),
-                    TextSpan(
-                      text: "${hashOfUserName[2]} ",
-                      style: Theme.of(context).textTheme.bodyText1,
-                    ),
-                  ] else ...[
-                    TextSpan(
-                      text: "${notificationInfo.text} ",
-                      style: Theme.of(context).textTheme.bodyText1,
-                    ),
-                  ],
-                  TextSpan(
-                    text: reformatDate,
-                    style: Theme.of(context).textTheme.headline1,
-                  ),
-                ],
+                text: "${notificationInfo.personalUserName} ",
+                style: Theme.of(context).textTheme.headline2,
               ),
-            ),
+              if (hashOfUserName.isNotEmpty) ...[
+                TextSpan(
+                  text: "${hashOfUserName[0]} ",
+                  style: Theme.of(context).textTheme.bodyText1,
+                ),
+                TextSpan(
+                  text: "${hashOfUserName[1]} ",
+                  style: getNormalStyle(color: ColorManager.blue),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () async {
+                      String userName =
+                          hashOfUserName[1].replaceAll('@', '');
+                      await Navigator.of(
+                        context,
+                      ).push(CupertinoPageRoute(
+                          builder: (context) => WhichProfilePage(
+                                userName: userName,
+                              ),
+                          maintainState: false));
+                    },
+                ),
+                TextSpan(
+                  text: "${hashOfUserName[2]} ",
+                  style: Theme.of(context).textTheme.bodyText1,
+                ),
+              ] else ...[
+                TextSpan(
+                  text: "${notificationInfo.text} ",
+                  style: Theme.of(context).textTheme.bodyText1,
+                ),
+              ],
+              TextSpan(
+                text: reformatDate,
+                style: Theme.of(context).textTheme.headline1,
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          if (notificationInfo.isThatPost)
-            GestureDetector(
-              onTap: () {
-                String appBarText;
-                if (notificationInfo.isThatPost &&
-                    notificationInfo.isThatLike) {
-                  appBarText = StringsManager.post.tr();
-                } else {
-                  appBarText = StringsManager.comments.tr();
-                }
-                Navigator.of(context).push(CupertinoPageRoute(
-                  builder: (context) => GetsPostInfoAndDisplay(
-                    postId: notificationInfo.postId,
-                    appBarText: appBarText,
-                  ),
-                ));
-              },
-              child: Image.network(notificationInfo.postImageUrl,
-                  height: 45, width: 45),
-            ),
-        ]),
-      ),
+        ),
+       
+        if (notificationInfo.isThatPost)
+          GestureDetector(
+            onTap: () {
+              String appBarText;
+              if (notificationInfo.isThatPost &&
+                  notificationInfo.isThatLike) {
+                appBarText = StringsManager.post.tr();
+              } else {
+                appBarText = StringsManager.comments.tr();
+              }
+              Navigator.of(context).push(CupertinoPageRoute(
+                builder: (context) => GetsPostInfoAndDisplay(
+                  postId: notificationInfo.postId,
+                  appBarText: appBarText,
+                ),
+              ));
+            },
+            child: Image.network(notificationInfo.postImageUrl,
+                height: 30, width: 30),
+          ),
+      ]),
     );
   }
 }
