@@ -76,6 +76,7 @@ dependencies:
   blurhash: ^1.0.0
   sliding_sheet: ^0.5.2
   get: ^4.6.5
+  http: ^0.13.4
   firebase_core_web: ^1.6.6
   video_thumbnail: ^0.5.0
   permission_handler: ^9.2.0

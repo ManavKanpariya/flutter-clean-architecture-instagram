@@ -4,6 +4,7 @@ class IconsAssets {
   static const String send1Icon = "$iconPath/send.svg";
   static const String send2Icon = "$iconPath/paper-plane-right.svg";
   static const String loveIcon = "$iconPath/heart.svg";
+  static const String moreIcon = "$iconPath/More.svg";
   static const String menuIcon = "$iconPath/menu.svg";
   static const String menuHorizontalIcon = "$iconPath/menu_horizontal.svg";
   static const String menuHorizontal2Icon = "$iconPath/menu_h.svg";

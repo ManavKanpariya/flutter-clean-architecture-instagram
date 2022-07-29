@@ -108,48 +108,51 @@ class _ChatMessagesState extends State<ChatMessages>
   }
 
   Widget buildBody(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: newMessageInfo,
-      builder: (context, Message? newMessageValue, child) =>
-          ValueListenableBuilder(
-        valueListenable: globalMessagesInfo,
-        builder: (context, List<Message> globalMessagesValue, child) =>
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 450),
+      child: ValueListenableBuilder(
+        valueListenable: newMessageInfo,
+        builder: (context, Message? newMessageValue, child) =>
             ValueListenableBuilder(
-          valueListenable: isMessageLoaded,
-          builder: (context, bool isMessageLoadedValue, child) =>
-              BlocBuilder<MessageBloc, MessageBlocState>(
-                  bloc: BlocProvider.of<MessageBloc>(context)
-                    ..add(LoadMessages(widget.userInfo.userId)),
-                  buildWhen: (previous, current) {
-                    if (previous != current && (current is MessageBlocLoaded)) {
-                      return true;
-                    }
-                    return false;
-                  },
-                  builder: (context, state) {
-                    if (state is MessageBlocLoaded) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (state.messages.length >=
-                            globalMessagesValue.length) {
-                          globalMessagesInfo.value = state.messages;
-                          if (itemIndex < globalMessagesValue.length - 1 &&
-                              isThatMobile) {
-                            itemIndex = globalMessagesValue.length - 1;
-                            scrollToLastIndex(context);
+          valueListenable: globalMessagesInfo,
+          builder: (context, List<Message> globalMessagesValue, child) =>
+              ValueListenableBuilder(
+            valueListenable: isMessageLoaded,
+            builder: (context, bool isMessageLoadedValue, child) =>
+                BlocBuilder<MessageBloc, MessageBlocState>(
+                    bloc: BlocProvider.of<MessageBloc>(context)
+                      ..add(LoadMessages(widget.userInfo.userId)),
+                    buildWhen: (previous, current) {
+                      if (previous != current && (current is MessageBlocLoaded)) {
+                        return true;
+                      }
+                      return false;
+                    },
+                    builder: (context, state) {
+                      if (state is MessageBlocLoaded) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (state.messages.length >=
+                              globalMessagesValue.length) {
+                            globalMessagesInfo.value = state.messages;
+                            if (itemIndex < globalMessagesValue.length - 1 &&
+                                isThatMobile) {
+                              itemIndex = globalMessagesValue.length - 1;
+                              scrollToLastIndex(context);
+                            }
                           }
-                        }
-                        if (newMessageValue != null && isMessageLoadedValue) {
-                          isMessageLoaded.value = false;
-                          globalMessagesInfo.value.add(newMessageValue);
-                        }
-                      });
-                      return whichListOfMessages(globalMessagesValue, context);
-                    } else {
-                      return isThatMobile
-                          ? buildCircularProgress()
-                          : const ThineLinearProgress();
-                    }
-                  }),
+                          if (newMessageValue != null && isMessageLoadedValue) {
+                            isMessageLoaded.value = false;
+                            globalMessagesInfo.value.add(newMessageValue);
+                          }
+                        });
+                        return whichListOfMessages(globalMessagesValue, context);
+                      } else {
+                        return isThatMobile
+                            ? buildCircularProgress()
+                            : const ThineLinearProgress();
+                      }
+                    }),
+          ),
         ),
       ),
     );
@@ -745,9 +748,10 @@ class _ChatMessagesState extends State<ChatMessages>
 
   Widget rowOfTextField(MessageCubit messageCubit) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      //crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         pickImageFromCamera(messageCubit),
+        
         messageTextField(),
         ValueListenableBuilder(
           valueListenable: _textController,

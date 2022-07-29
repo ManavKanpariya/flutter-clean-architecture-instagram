@@ -41,11 +41,13 @@ class _ChattingPageState extends State<ChattingPage>
   }
 
   Widget buildBody() {
-    return Column(
-      children: [
-        buildUserInfo(context),
-        ChatMessages(userInfo: widget.userInfo),
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          buildUserInfo(context),
+          ChatMessages(userInfo: widget.userInfo),
+        ],
+      ),
     );
   }
 

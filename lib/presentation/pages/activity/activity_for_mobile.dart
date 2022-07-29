@@ -279,7 +279,7 @@ class _ShowNotificationsState extends State<_ShowNotifications> {
               ));
             },
             child: Image.network(notificationInfo.postImageUrl,
-                height: 30, width: 30
+             //   height: 15, width: 15
                 ),
           ),
       ]),
