@@ -1,8 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:instagram/config/routes/app_routes.dart';
 import 'package:instagram/config/routes/customRoutes/hero_dialog_route.dart';
 import 'package:instagram/core/functions/date_of_now.dart';
 import 'package:instagram/core/resources/assets_manager.dart';
@@ -20,6 +20,8 @@ import 'package:instagram/presentation/cubit/follow/follow_cubit.dart';
 import 'package:instagram/presentation/cubit/notification/notification_cubit.dart';
 import 'package:instagram/presentation/cubit/postInfoCubit/postLikes/post_likes_cubit.dart';
 import 'package:instagram/presentation/cubit/postInfoCubit/post_cubit.dart';
+import 'package:instagram/presentation/customPackages/sliding_sheet/sheet_pop_container.dart';
+import 'package:instagram/presentation/customPackages/sliding_sheet/specs.dart';
 import 'package:instagram/presentation/pages/comments/comments_for_mobile.dart';
 import 'package:instagram/presentation/pages/time_line/my_own_time_line/update_post_info.dart';
 import 'package:instagram/presentation/pages/video/play_this_video.dart';
@@ -37,23 +39,24 @@ import 'package:instagram/presentation/widgets/global/circle_avatar_image/circle
 import 'package:instagram/presentation/widgets/global/custom_widgets/custom_network_image_display.dart';
 import 'package:instagram/presentation/widgets/global/others/count_of_likes.dart';
 import 'package:instagram/presentation/widgets/global/popup_widgets/common/jump_arrow.dart';
+import 'package:instagram/presentation/widgets/global/popup_widgets/common/volume_icon.dart';
+import 'package:instagram/presentation/widgets/global/popup_widgets/web/menu_card.dart';
 import 'package:instagram/presentation/widgets/global/popup_widgets/web/share_post.dart';
-import 'package:sliding_sheet/sliding_sheet.dart';
+// import 'package:sliding_sheet/sliding_sheet.dart';
 
 class ImageOfPost extends StatefulWidget {
   final ValueNotifier<Post> postInfo;
-  final bool playTheVideo;
+  bool playTheVideo;
   final VoidCallback? reLoadData;
   final int indexOfPost;
   final ValueNotifier<List<Post>> postsInfo;
   final VoidCallback? rebuildPreviousWidget;
   final bool popupWebContainer;
   final bool showSliderArrow;
-
   final ValueNotifier<TextEditingController> textController;
   final ValueNotifier<Comment?> selectedCommentInfo;
 
-  const ImageOfPost({
+  ImageOfPost({
     Key? key,
     this.reLoadData,
     required this.postInfo,
@@ -83,6 +86,7 @@ class _ImageOfPostState extends State<ImageOfPost>
   ValueNotifier<bool> isSaved = ValueNotifier(false);
   ValueNotifier<int> initPosition = ValueNotifier(0);
   bool showCommentBox = false;
+  bool soundOn = true;
 
   bool isLiked = false;
   bool isHeartAnimation = false;
@@ -100,10 +104,13 @@ class _ImageOfPostState extends State<ImageOfPost>
         : buildPostForWeb(bodyHeight: 700);
   }
 
-  pushToProfilePage(Post postInfo) =>
-      Navigator.of(context).push(CupertinoPageRoute(
-        builder: (context) => WhichProfilePage(userId: postInfo.publisherId),
-      ));
+  pushToProfilePage(Post postInfo) {
+    if(widget.popupWebContainer) {
+      Navigator.of(context).maybePop(
+      );
+    }
+    return pushToPage(context, page: WhichProfilePage(userId: postInfo.publisherId));
+  }
 
   Widget buildPostForMobile({required double bodyHeight}) {
     return SizedBox(
@@ -259,7 +266,7 @@ class _ImageOfPostState extends State<ImageOfPost>
           ),
         );
       },
-      child: JumpArrow(isThatBack: isThatBack, makeArrowBigger: true),
+      child: ArrowJump(isThatBack: isThatBack, makeArrowBigger: true),
     );
   }
 
@@ -284,16 +291,24 @@ class _ImageOfPostState extends State<ImageOfPost>
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Flexible(
-                      child: Container(
-                        height: double.infinity,
-                        decoration: const BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(5),
-                              topLeft: Radius.circular(5)),
-                          color: ColorManager.black,
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            setState(() =>
+                                widget.playTheVideo = !widget.playTheVideo);
+                          });
+                        },
+                        child: Container(
+                          height: double.infinity,
+                          decoration: const BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(5),
+                                topLeft: Radius.circular(5)),
+                            color: ColorManager.black,
+                          ),
+                          child: imageOfPost(widget.postInfo.value),
                         ),
-                        child: imageOfPost(widget.postInfo.value),
                       ),
                     ),
                     Container(
@@ -494,24 +509,19 @@ class _ImageOfPostState extends State<ImageOfPost>
           },
           onTap: () async {
             if (isThatMobile) {
-              Navigator.of(context).push(
-                CupertinoPageRoute(
-                  builder: (context) {
-                    return ValueListenableBuilder(
-                      valueListenable: initPosition,
-                      builder: (context, int positionValue, child) =>
-                          PictureViewer(
-                        blurHash: postInfo.blurHash,
-                        aspectRatio: postInfo.aspectRatio,
-                        isThatImage: postInfo.isThatImage,
-                        imageUrl: postInfo.postUrl.isNotEmpty
-                            ? postInfo.postUrl
-                            : postInfo.imagesUrls[positionValue],
-                      ),
-                    );
-                  },
-                ),
-              );
+              pushToPage(context,
+                  page: ValueListenableBuilder(
+                    valueListenable: initPosition,
+                    builder: (context, int positionValue, child) =>
+                        PictureViewer(
+                      blurHash: postInfo.blurHash,
+                      aspectRatio: postInfo.aspectRatio,
+                      isThatImage: postInfo.isThatImage,
+                      imageUrl: postInfo.postUrl.isNotEmpty
+                          ? postInfo.postUrl
+                          : postInfo.imagesUrls[positionValue],
+                    ),
+                  ));
             }
           },
           child: Padding(
@@ -533,8 +543,34 @@ class _ImageOfPostState extends State<ImageOfPost>
                           imageUrl: postInfo.postUrl,
                         ),
                       ))
-                : PlayThisVideo(
-                    videoUrl: postInfo.postUrl, play: widget.playTheVideo),
+                : Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      PlayThisVideo(
+                          videoUrl: postInfo.postUrl,
+                          play: widget.playTheVideo,
+                          withoutSound: !soundOn),
+                      if (!widget.playTheVideo)
+                        const Align(
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.play_arrow_rounded,
+                            color: ColorManager.white,
+                            size: 200,
+                          ),
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Align(
+                          alignment: Alignment.bottomRight,
+                          child: GestureDetector(
+                            onTap: () => setState(() => soundOn = !soundOn),
+                            child: VolumeIcon(isVolumeOn: soundOn),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
           ),
         ),
         Opacity(
@@ -558,7 +594,9 @@ class _ImageOfPostState extends State<ImageOfPost>
   Widget menuButton() {
     return GestureDetector(
       child: SvgPicture.asset(
-        !isThatMobile ? IconsAssets.menuHorizontal2Icon : IconsAssets.menuIcon,
+        !isThatMobile
+            ? IconsAssets.menuHorizontal2Icon
+            : IconsAssets.menuHorizontalIcon,
         color: Theme.of(context).focusColor,
         height: 23,
       ),
@@ -582,9 +620,7 @@ class _ImageOfPostState extends State<ImageOfPost>
 
   popupContainerForWeb() => Navigator.of(context).push(
         HeroDialogRoute(
-          builder: (context) {
-            return const _MenuCard();
-          },
+          builder: (context) => const PopupMenuCard(),
         ),
       );
 
@@ -613,13 +649,11 @@ class _ImageOfPostState extends State<ImageOfPost>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GestureDetector(child: textOfOrders(StringsManager.archive.tr())),
+            textOfOrders(StringsManager.archive.tr()),
             deletePost(postInfoValue),
             editPost(postInfoValue),
-            GestureDetector(
-                child: textOfOrders(StringsManager.hideLikeCount.tr())),
-            GestureDetector(
-                child: textOfOrders(StringsManager.turnOffCommenting.tr())),
+            textOfOrders(StringsManager.hideLikeCount.tr()),
+            textOfOrders(StringsManager.turnOffCommenting.tr()),
             Container(height: 10)
           ],
         ),
@@ -649,11 +683,8 @@ class _ImageOfPostState extends State<ImageOfPost>
       return GestureDetector(
           onTap: () async {
             Navigator.maybePop(context);
-            await Navigator.of(context, rootNavigator: true)
-                .push(MaterialPageRoute(
-              maintainState: false,
-              builder: (context) => UpdatePostInfo(oldPostInfo: postInfoValue),
-            ));
+            await pushToPage(context,
+                page: UpdatePostInfo(oldPostInfo: postInfoValue));
           },
           child: textOfOrders(StringsManager.edit.tr()));
     });
@@ -673,10 +704,10 @@ class _ImageOfPostState extends State<ImageOfPost>
               valueListenable: widget.postInfo,
               builder: (context, Post postInfoValue, child) => GestureDetector(
                   onTap: () async {
-                    await followCubit.removeThisFollower(
+                    await followCubit.unFollowThisUser(
                         followingUserId: widget.postInfo.value.publisherId,
                         myPersonalId: myPersonalId);
-                    WidgetsBinding.instance.addPostFrameCallback((_) async {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
                       setState(() {
                         if (widget.reLoadData != null) {
                           widget.reLoadData!();
@@ -903,19 +934,18 @@ class _ImageOfPostState extends State<ImageOfPost>
         child: iconsOfImagePost(IconsAssets.commentIcon),
         onTap: () {
           if (isThatMobile) {
-            Navigator.of(
-              context,
-            ).push(CupertinoPageRoute(
-              builder: (context) =>
-                  CommentsPageForMobile(postInfo: postInfoValue),
-            ));
+            pushToPage(context, page: CommentsPageForMobile(postInfo: postInfoValue));
           } else {
             if (!widget.popupWebContainer) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() => widget.playTheVideo = false);
+              });
+
               Navigator.of(context).push(
                 HeroDialogRoute(
                   builder: (context) => ImageOfPost(
                     postInfo: widget.postInfo,
-                    playTheVideo: widget.playTheVideo,
+                    playTheVideo: true,
                     indexOfPost: widget.indexOfPost,
                     postsInfo: widget.postsInfo,
                     rebuildPreviousWidget: widget.rebuildPreviousWidget,
@@ -926,71 +956,14 @@ class _ImageOfPostState extends State<ImageOfPost>
                   ),
                 ),
               );
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() => widget.playTheVideo = true);
+              });
             } else {
               setState(() => showCommentBox = true);
             }
           }
         },
-      ),
-    );
-  }
-}
-
-class _MenuCard extends StatelessWidget {
-  const _MenuCard({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    bool minimumOfWidth = MediaQuery.of(context).size.width > 600;
-    return Center(
-      child: SizedBox(
-        width: minimumOfWidth ? 420 : 250,
-        child: Material(
-          color: ColorManager.white,
-          elevation: 2,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                buildRedContainer("Report", makeColorRed: true),
-                customDivider(),
-                buildRedContainer("Unfollow", makeColorRed: true),
-                customDivider(),
-                buildRedContainer("Go to post"),
-                customDivider(),
-                buildRedContainer("Share to..."),
-                customDivider(),
-                buildRedContainer("Copy link"),
-                customDivider(),
-                buildRedContainer("Embed"),
-                customDivider(),
-                GestureDetector(
-                    onTap: () => Navigator.of(context).maybePop(),
-                    child: buildRedContainer("Cancel")),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Divider customDivider() =>
-      const Divider(color: ColorManager.grey, thickness: 0.5);
-
-  Container buildRedContainer(String text, {bool makeColorRed = false}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Text(
-        text,
-        style: makeColorRed
-            ? getBoldStyle(color: ColorManager.red)
-            : getNormalStyle(color: ColorManager.black),
-        textAlign: TextAlign.center,
       ),
     );
   }

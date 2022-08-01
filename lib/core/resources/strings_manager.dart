@@ -15,6 +15,7 @@ class StringsManager {
   static const String story = "story";
   static const String posts = "posts";
   static const String postsCap = "postsCap";
+  static const String cancel = "cancel";
 
   static const String block = "block";
   static const String reply = "reply";
@@ -24,6 +25,7 @@ class StringsManager {
   static const String noUsers = "noUsers";
   static const String undo = "undo";
   static const String done = "done";
+  static const String slideToCancel = "slideToCancel";
 
   static const String name = "name";
   static const String writeMessage = "writeMessage";
@@ -99,6 +101,7 @@ class StringsManager {
   static const String followers = "followers";
   static const String follower = "follower";
   static const String following = "following";
+  static const String followings = "followings";
 
   static const String facebook = "facebook";
   static const String sendMessage = "sendMessage";

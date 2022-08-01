@@ -1,10 +1,9 @@
-import 'dart:typed_data';
 import 'dart:ui';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:instagram/config/routes/app_routes.dart';
 import 'package:instagram/config/routes/customRoutes/hero_dialog_route.dart';
 import 'package:instagram/core/resources/assets_manager.dart';
 import 'package:instagram/core/resources/color_manager.dart';
@@ -13,6 +12,8 @@ import 'package:instagram/core/utility/constant.dart';
 import 'package:instagram/data/models/post.dart';
 import 'package:instagram/data/models/user_personal_info.dart';
 import 'package:instagram/presentation/cubit/postInfoCubit/postLikes/post_likes_cubit.dart';
+import 'package:instagram/presentation/customPackages/sliding_sheet/sheet_pop_container.dart';
+import 'package:instagram/presentation/customPackages/sliding_sheet/specs.dart';
 import 'package:instagram/presentation/pages/comments/comments_for_mobile.dart';
 import 'package:instagram/presentation/pages/video/play_this_video.dart';
 import 'package:instagram/presentation/widgets/belong_to/profile_w/which_profile_page.dart';
@@ -24,8 +25,7 @@ import 'package:instagram/presentation/widgets/global/custom_widgets/custom_app_
 import 'package:instagram/presentation/widgets/global/custom_widgets/custom_network_image_display.dart';
 import 'package:instagram/presentation/widgets/global/custom_widgets/custom_posts_display.dart';
 import 'package:instagram/presentation/widgets/global/others/image_of_post.dart';
-import 'package:sliding_sheet/sliding_sheet.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
+// import 'package:sliding_sheet/sliding_sheet.dart';
 
 class _PositionDimension {
   final double positionTop;
@@ -90,7 +90,6 @@ class _CustomGridViewDisplayState extends State<CustomGridViewDisplay> {
 
   bool isLiked = false;
   bool isTempLiked = false;
-  Uint8List? coverOfVideoForWeb;
   ValueNotifier<bool> isHeartAnimation = ValueNotifier(false);
 
   double widgetPositionLeft = 0;
@@ -100,20 +99,7 @@ class _CustomGridViewDisplayState extends State<CustomGridViewDisplay> {
   @override
   void initState() {
     isLiked = widget.postClickedInfo.likes.contains(myPersonalId);
-    if (!widget.postClickedInfo.isThatImage && !isThatMobile) {
-      createVideoCover();
-    }
     super.initState();
-  }
-
-  Future<void> createVideoCover() async {
-    final Uint8List? fileName = await VideoThumbnail.thumbnailData(
-      video: widget.postClickedInfo.postUrl,
-      imageFormat: ImageFormat.WEBP,
-      maxHeight: 200,
-      quality: 90,
-    );
-    if (fileName != null) setState(() => coverOfVideoForWeb = fileName);
   }
 
   @override
@@ -181,15 +167,11 @@ class _CustomGridViewDisplayState extends State<CustomGridViewDisplay> {
       );
 
   Widget buildCardVideo() {
-    if (coverOfVideoForWeb != null) {
-      return Image.memory(coverOfVideoForWeb!, fit: BoxFit.cover);
-    } else {
-      return PlayThisVideo(
-        videoUrl: widget.postClickedInfo.postUrl,
-        play: widget.playThisVideo,
-        withoutSound: true,
-      );
-    }
+    return PlayThisVideo(
+      videoUrl: widget.postClickedInfo.postUrl,
+      play: widget.playThisVideo,
+      withoutSound: true,
+    );
   }
 
   Stack buildCardImage() {
@@ -225,18 +207,18 @@ class _CustomGridViewDisplayState extends State<CustomGridViewDisplay> {
     customPostsInfo.removeWhere(
         (value) => value.postUid == widget.postClickedInfo.postUid);
     customPostsInfo.insert(0, widget.postClickedInfo);
-    Navigator.of(context).push(CupertinoPageRoute(
-      builder: (context) => Scaffold(
-        appBar: isThatMobile
-            ? CustomAppBar.oneTitleAppBar(
-                context,
-                widget.isThatProfile
-                    ? StringsManager.posts.tr()
-                    : StringsManager.explore.tr())
-            : null,
-        body: CustomPostsDisplay(postsInfo: widget.postsInfo),
-      ),
-    ));
+    Scaffold page= Scaffold(
+      appBar: isThatMobile
+          ? CustomAppBar.oneTitleAppBar(
+          context,
+          widget.isThatProfile
+              ? StringsManager.posts.tr()
+              : StringsManager.explore.tr())
+          : null,
+      body: CustomPostsDisplay(postsInfo: widget.postsInfo),
+    );
+    pushToPage(context,
+        page: page,withoutRoot: false);
   }
 
   void onLongPressMoveUpdate(LongPressMoveUpdateDetails details) {
@@ -335,19 +317,15 @@ class _CustomGridViewDisplayState extends State<CustomGridViewDisplay> {
       isHeartAnimation.value = false;
     }
     if (viewProfileVisibility.value) {
-      Navigator.of(context).push(
-        CupertinoPageRoute(
-          builder: (context) {
-            if (widget.isThatProfile) {
-              return CommentsPageForMobile(postInfo: widget.postClickedInfo);
-            } else {
-              return WhichProfilePage(
-                userId: widget.postClickedInfo.publisherId,
-              );
-            }
-          },
-        ),
-      );
+      Widget page;
+      if (widget.isThatProfile) {
+        page = CommentsPageForMobile(postInfo: widget.postClickedInfo);
+      } else {
+        page = WhichProfilePage(
+          userId: widget.postClickedInfo.publisherId,
+        );
+      }
+      pushToPage(context, page: page, withoutRoot: false);
     }
     if (shareVisibility.value) draggableBottomSheet();
 

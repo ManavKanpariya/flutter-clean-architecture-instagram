@@ -1,10 +1,9 @@
 import 'dart:async';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animated_dialog/flutter_animated_dialog.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:instagram/config/routes/app_routes.dart';
 import 'package:instagram/core/functions/toast_show.dart';
 import 'package:instagram/core/resources/color_manager.dart';
 import 'package:instagram/core/resources/strings_manager.dart';
@@ -16,13 +15,13 @@ import 'package:instagram/presentation/cubit/postInfoCubit/post_cubit.dart';
 import 'package:instagram/presentation/cubit/postInfoCubit/specific_users_posts_cubit.dart';
 import 'package:instagram/presentation/customPackages/in_view_notifier/in_view_notifier_list.dart';
 import 'package:instagram/presentation/customPackages/in_view_notifier/in_view_notifier_widget.dart';
+import 'package:instagram/presentation/pages/story/story_for_web.dart';
 import 'package:instagram/presentation/pages/story/stroy_page.dart';
 import 'package:instagram/presentation/widgets/belong_to/profile_w/custom_gallery/create_new_story.dart';
 import 'package:instagram/presentation/widgets/belong_to/time_line_w/all_catch_up_icon.dart';
 import 'package:instagram/presentation/widgets/belong_to/time_line_w/image_of_post_for_time_line.dart';
 import 'package:instagram/presentation/widgets/global/custom_widgets/custom_app_bar.dart';
 import 'package:instagram/presentation/widgets/global/custom_widgets/custom_circulars_progress.dart';
-
 import '../../../../data/models/user_personal_info.dart';
 import '../../../cubit/firestoreUserInfoCubit/user_info_cubit.dart';
 import '../../../widgets/global/circle_avatar_image/circle_avatar_of_profile_image.dart';
@@ -31,11 +30,8 @@ class HomePage extends StatefulWidget {
   final String userId;
   final bool playVideo;
 
-  const HomePage({
-    Key? key,
-    required this.userId,
-    required this.playVideo,
-  }) : super(key: key);
+  const HomePage({Key? key, required this.userId, this.playVideo = true})
+      : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -166,8 +162,14 @@ class _HomePageState extends State<HomePage> {
                   return InViewNotifierWidget(
                     id: '$index',
                     builder: (_, bool isInView, __) {
+                      bool checkForPlatform = isThatMobile
+                          ? isInView && widget.playVideo
+                          : isInView;
                       return columnOfWidgets(
-                          bodyHeight, index, isInView && widget.playVideo);
+                        bodyHeight,
+                        index,
+                        checkForPlatform,
+                      );
                     },
                   );
                 },
@@ -211,9 +213,8 @@ class _HomePageState extends State<HomePage> {
   Widget posts(int index, double bodyHeight, bool playTheVideo) {
     Widget buildPost = ValueListenableBuilder(
       valueListenable: postsInfo,
-      builder: (context, List<Post> postsInfoValue, child) =>
-          PostOfTimeLine(
-        postInfo: ValueNotifier(postsInfoValue[index]),
+      builder: (context, List<Post> postsInfoValue, child) => PostOfTimeLine(
+        postInfo: ValueNotifier(postsInfo.value[index]),
         postsInfo: postsInfo,
         playTheVideo: playTheVideo,
         indexOfPost: index,
@@ -253,13 +254,7 @@ class _HomePageState extends State<HomePage> {
 
   createNewStory() async {
     Navigator.maybePop(context);
-    Navigator.of(context, rootNavigator: true).push(
-      CupertinoPageRoute(
-          builder: (context) {
-            return const CreateNewStory();
-          },
-          maintainState: false),
-    );
+    pushToPage(context, page: const CreateNewStory());
     reLoadData.value = true;
   }
 
@@ -292,7 +287,9 @@ class _HomePageState extends State<HomePage> {
             List<UserPersonalInfo> storiesOwnersInfo = state.storiesOwnersInfo;
             Widget stories =
                 buildStories(bodyHeight, context, storiesOwnersInfo);
-            return isThatMobile ? stories : roundedContainer(child: stories);
+            return isThatMobile
+                ? stories
+                : roundedContainer(child: stories, isThatStory: true);
           } else if (state is CubitStoryFailed) {
             ToastShow.toastStateError(state);
             return Center(
@@ -312,24 +309,25 @@ class _HomePageState extends State<HomePage> {
     required Widget child,
     bool internalPadding = true,
     bool verticalPadding = false,
+    bool isThatStory = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(top: 15.0),
       child: Container(
         padding: internalPadding || verticalPadding
-            ? EdgeInsets.symmetric(
-                horizontal: verticalPadding ? 0 : 10, vertical: 15)
+            ? const EdgeInsets.symmetric(vertical: 15)
             : null,
         decoration: BoxDecoration(
           color: ColorManager.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: ColorManager.lightGrey, width: .5),
+          border: Border.all(color: ColorManager.lowOpacityGrey, width: 1),
         ),
         child: child,
       ),
     );
   }
 
+  ScrollController scrollController = ScrollController();
   Padding buildStories(double bodyHeight, BuildContext context,
       List<UserPersonalInfo> storiesOwnersInfo) {
     return Padding(
@@ -342,13 +340,14 @@ class _HomePageState extends State<HomePage> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (personalInfo!.stories.isEmpty) ...[
+              if (personalInfo!.stories.isEmpty && isThatMobile) ...[
                 myOwnStory(context, storiesOwnersInfo, bodyHeight),
                 const SizedBox(width: 12),
               ],
               ListView.separated(
                 scrollDirection: Axis.horizontal,
                 shrinkWrap: true,
+                controller: scrollController,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: storiesOwnersInfo.length,
                 separatorBuilder: (BuildContext context, int index) =>
@@ -359,14 +358,21 @@ class _HomePageState extends State<HomePage> {
                     tag: "${publisherInfo.userId.hashCode}",
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.of(context, rootNavigator: true)
-                            .push(MaterialPageRoute(
-                          maintainState: false,
-                          builder: (context) => StoryPage(
+                        Widget page;
+                        if (isThatMobile) {
+                          page = StoryPage(
                               user: publisherInfo,
-                              hashTag: "${publisherInfo.userId.hashCode}",
-                              storiesOwnersInfo: storiesOwnersInfo),
-                        ));
+                              hashTag:
+                                  "${publisherInfo.userId.hashCode} for mobile",
+                              storiesOwnersInfo: storiesOwnersInfo);
+                        } else {
+                          page = StoryPageForWeb(
+                              user: publisherInfo,
+                              hashTag:
+                                  "${publisherInfo.userId.hashCode} for web",
+                              storiesOwnersInfo: storiesOwnersInfo);
+                        }
+                        pushToPage(context, page: page);
                       },
                       child: CircleAvatarOfProfileImage(
                         userInfo: publisherInfo,
@@ -390,44 +396,15 @@ class _HomePageState extends State<HomePage> {
 
   moveToStoryPage(
           List<UserPersonalInfo> storiesOwnersInfo, UserPersonalInfo user) =>
-      Navigator.of(context, rootNavigator: true).push(CupertinoPageRoute(
-        maintainState: false,
-        builder: (context) =>
-            StoryPage(user: user, storiesOwnersInfo: storiesOwnersInfo),
-      ));
+      pushToPage(context,
+          page: StoryPage(user: user, storiesOwnersInfo: storiesOwnersInfo));
 
   Widget myOwnStory(BuildContext context,
       List<UserPersonalInfo> storiesOwnersInfo, double bodyHeight) {
     return GestureDetector(
       onTap: () async {
-        showAnimatedDialog(
-            context: context,
-            curve: Curves.easeIn,
-            builder: (context) => AlertDialog(
-                  scrollable: true,
-                  backgroundColor: Theme.of(context).primaryColor,
-                  elevation: 5,
-                  content: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          onTap: () async {
-                            await createNewStory();
-                            await getData(0);
-                          },
-                          child: Text(StringsManager.fromCamera.tr()),
-                        ),
-                        const SizedBox(height: 15),
-                        GestureDetector(
-                          onTap: () async {
-                            await createNewStory();
-                            await getData(0);
-                          },
-                          child: Text(StringsManager.fromGallery.tr()),
-                        ),
-                      ]),
-                ));
+        pushToPage(context, page: const CreateNewStory());
+        reLoadData.value = true;
       },
       child: Stack(
         children: [

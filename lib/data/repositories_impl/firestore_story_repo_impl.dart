@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:instagram/core/utility/constant.dart';
 import 'package:instagram/data/datasourses/remote/firebase_storage.dart';
 import 'package:instagram/data/datasourses/remote/user/firestore_user_info.dart';
 import 'package:instagram/data/datasourses/remote/story/firestore_story.dart';
@@ -13,8 +14,11 @@ class FirestoreStoryRepositoryImpl implements FirestoreStoryRepository {
     try {
       String postUrl = await FirebaseStoragePost.uploadFile(file, 'postsImage');
       storyInfo.storyUrl = postUrl;
-      String postUid = await FireStoreStory.createStory(storyInfo);
-      return postUid;
+      String storyUid = await FireStoreStory.createStory(storyInfo);
+      await FirestoreUser.updateUserStories(
+          userId: storyInfo.publisherId, storyId: storyUid);
+
+      return storyUid;
     } catch (e) {
       return Future.error(e.toString());
     }
@@ -25,7 +29,8 @@ class FirestoreStoryRepositoryImpl implements FirestoreStoryRepository {
       {required List<dynamic> usersIds}) async {
     try {
       List<UserPersonalInfo> usersInfo =
-          await FirestoreUser.getSpecificUsersInfo(usersIds);
+          await FirestoreUser.getSpecificUsersInfo(
+              usersIds: usersIds, userUid: myPersonalId, fieldName: 'stories');
       return await FireStoreStory.getStoriesInfo(usersInfo);
     } catch (e) {
       return Future.error(e.toString());

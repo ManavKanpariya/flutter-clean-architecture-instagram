@@ -12,10 +12,15 @@ class UsersWhoLikes extends StatelessWidget {
   final List<dynamic> usersIds;
   final bool showSearchBar;
   final bool showColorfulCircle;
+  final bool isThatMyPersonalId;
 
-  const UsersWhoLikes(
-      {Key? key, required this.showSearchBar, required this.usersIds, this.showColorfulCircle = true,})
-      : super(key: key);
+  const UsersWhoLikes({
+    Key? key,
+    required this.showSearchBar,
+    required this.usersIds,
+    required this.isThatMyPersonalId,
+    this.showColorfulCircle = true,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +33,9 @@ class UsersWhoLikes extends StatelessWidget {
         if (state is CubitGettingSpecificUsersLoaded) {
           return ShowMeTheUsers(
             usersInfo: state.specificUsersInfo,
-            showSearchBar: showSearchBar,
             emptyText: StringsManager.noUsers.tr(),
             showColorfulCircle: showColorfulCircle,
+            isThatMyPersonalId: isThatMyPersonalId,
           );
         }
         if (state is CubitGettingSpecificUsersFailed) {

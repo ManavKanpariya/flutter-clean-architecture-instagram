@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:instagram/config/routes/app_routes.dart';
 import 'package:instagram/core/resources/color_manager.dart';
 import 'package:instagram/core/resources/strings_manager.dart';
 import 'package:instagram/data/models/user_personal_info.dart';
@@ -15,19 +16,16 @@ import 'package:instagram/presentation/widgets/belong_to/profile_w/which_profile
 class ShowMeTheUsers extends StatefulWidget {
   final List<UserPersonalInfo> usersInfo;
   final bool isThatFollower;
-  final ValueNotifier<UserPersonalInfo>? userInfo;
-  final bool showSearchBar;
   final bool showColorfulCircle;
   final String emptyText;
-
+  final bool isThatMyPersonalId;
   const ShowMeTheUsers({
     Key? key,
-    required this.usersInfo,
+    required this.isThatMyPersonalId,
     this.showColorfulCircle = true,
     this.isThatFollower = true,
-    this.showSearchBar = true,
+    required this.usersInfo,
     required this.emptyText,
-    this.userInfo,
   }) : super(key: key);
 
   @override
@@ -74,13 +72,9 @@ class _ShowMeTheUsersState extends State<ShowMeTheUsers> {
 
     return InkWell(
       onTap: () async {
-        await Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (context) => WhichProfilePage(
-              userId: userInfo.userId,
-            ),
-          ),
-        );
+        Navigator.of(context).maybePop();
+        await pushToPage(context,
+            page: WhichProfilePage(userId: userInfo.userId),withoutRoot: false);
       },
       child: Padding(
         padding: const EdgeInsetsDirectional.only(start: 15, top: 15),
@@ -101,23 +95,22 @@ class _ShowMeTheUsersState extends State<ShowMeTheUsers> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  userInfo.userName ,
+                  userInfo.userName,
                   style: Theme.of(context).textTheme.headline2,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  userInfo.name ,
+                  userInfo.name,
                   style: Theme.of(context).textTheme.headline1,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
-
                 )
               ],
             ),
           ),
-          const Spacer(),
+          // const Spacer(),
           followButton(userInfo, isThatFollower),
         ]),
       ),
@@ -127,28 +120,35 @@ class _ShowMeTheUsersState extends State<ShowMeTheUsers> {
   Widget followButton(UserPersonalInfo userInfo, bool isThatFollower) {
     return BlocBuilder<FollowCubit, FollowState>(
       builder: (followContext, stateOfFollow) {
-        return Builder(builder: (userContext) {
-          if (myPersonalId == userInfo.userId) {
-            return Container();
-          } else {
-            return GestureDetector(
-                onTap: () async {
-                  if (myPersonalInfo.followedPeople.contains(userInfo.userId)) {
-                    BlocProvider.of<FollowCubit>(followContext)
-                        .removeThisFollower(
-                            followingUserId: userInfo.userId,
-                            myPersonalId: myPersonalId);
-                    myPersonalInfo.followedPeople.remove(userInfo.userId);
-                  } else {
-                    BlocProvider.of<FollowCubit>(followContext).followThisUser(
-                        followingUserId: userInfo.userId,
-                        myPersonalId: myPersonalId);
-                    myPersonalInfo.followedPeople.add(userInfo.userId);
-                  }
-                },
-                child: whichContainerOfText(stateOfFollow, userInfo));
-          }
-        });
+        return Builder(
+          builder: (userContext) {
+            if (myPersonalId == userInfo.userId) {
+              return Container();
+            } else {
+              return GestureDetector(
+                  onTap: () async {
+                    if (myPersonalInfo.followedPeople
+                        .contains(userInfo.userId)) {
+                      BlocProvider.of<FollowCubit>(followContext)
+                          .unFollowThisUser(
+                              followingUserId: userInfo.userId,
+                              myPersonalId: myPersonalId);
+                      BlocProvider.of<FirestoreUserInfoCubit>(context)
+                          .updateMyFollowings(
+                              userId: userInfo.userId, addThisUser: false);
+                    } else {
+                      BlocProvider.of<FollowCubit>(followContext)
+                          .followThisUser(
+                              followingUserId: userInfo.userId,
+                              myPersonalId: myPersonalId);
+                      BlocProvider.of<FirestoreUserInfoCubit>(context)
+                          .updateMyFollowings(userId: userInfo.userId);
+                    }
+                  },
+                  child: whichContainerOfText(stateOfFollow, userInfo));
+            }
+          },
+        );
       },
     );
   }

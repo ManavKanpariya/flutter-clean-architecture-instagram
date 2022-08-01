@@ -14,8 +14,8 @@ abstract class FirestoreUserRepository {
   Future<UserPersonalInfo?> getUserFromUserName({required String userName});
   Future<UserPersonalInfo> updateUserPostsInfo(
       {required String userId, required String postId});
-  Future<UserPersonalInfo> updateUserStoriesInfo(
-      {required String userId, required String storyId});
+  // Future<UserPersonalInfo> updateUserStoriesInfo(
+  //     {required String userId, required String storyId});
   Future<UserPersonalInfo> updateUserInfo({required UserPersonalInfo userInfo});
 
   Future<String> uploadProfileImage(
@@ -32,7 +32,7 @@ abstract class FirestoreUserRepository {
 
   Future<void> followThisUser(String followingUserId, String myPersonalId);
 
-  Future<void> removeThisFollower(String followingUserId, String myPersonalId);
+  Future<void> unFollowThisUser(String followingUserId, String myPersonalId);
 
   Future<Message> sendMessage(
       {required Message messageInfo,

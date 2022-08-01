@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:instagram/config/routes/app_routes.dart';
 import 'package:instagram/core/resources/color_manager.dart';
 import 'package:instagram/core/resources/strings_manager.dart';
 import 'package:instagram/core/resources/styles_manager.dart';
@@ -46,11 +47,7 @@ class AllUsersTimeLinePage extends StatelessWidget {
         child: Center(
           child: TextField(
             onTap: () {
-              Navigator.of(context).push(
-                CupertinoPageRoute(
-                  builder: (context) => const SearchAboutUserPage(),
-                ),
-              );
+              pushToPage(context, page: const SearchAboutUserPage());
             },
             readOnly: true,
             decoration: InputDecoration(
@@ -129,22 +126,28 @@ class AllUsersTimeLinePage extends StatelessWidget {
   }
 
   Widget loadingWidget(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Theme.of(context).textTheme.headline5!.color!,
-      highlightColor: Theme.of(context).textTheme.headline6!.color!,
-      child: StaggeredGridView.countBuilder(
-        crossAxisSpacing: 1.5,
-        mainAxisSpacing: 1.5,
-        crossAxisCount: 3,
-        itemCount: 16,
-        itemBuilder: (_, __) {
-          return Container(
-              color: ColorManager.lightDarkGray, width: double.infinity);
-        },
-        staggeredTileBuilder: (index) {
-          double num = (index == 2 || (index % 11 == 0 && index != 0)) ? 2 : 1;
-          return StaggeredTile.count(1, num);
-        },
+    return Center(
+      child: SizedBox(
+        width: isThatMobile ? null : 910,
+        child: Shimmer.fromColors(
+          baseColor: Theme.of(context).textTheme.headline5!.color!,
+          highlightColor: Theme.of(context).textTheme.headline6!.color!,
+          child: StaggeredGridView.countBuilder(
+            crossAxisSpacing: isThatMobile ? 1.5 : 30,
+            mainAxisSpacing: isThatMobile ? 1.5 : 30,
+            crossAxisCount: 3,
+            itemCount: 16,
+            itemBuilder: (_, __) {
+              return Container(
+                  color: ColorManager.lightDarkGray, width: double.infinity);
+            },
+            staggeredTileBuilder: (index) {
+              double num =
+                  (index == 2 || (index % 11 == 0 && index != 0)) ? 2 : 1;
+              return StaggeredTile.count(1, num);
+            },
+          ),
+        ),
       ),
     );
   }
