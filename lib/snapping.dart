@@ -50,6 +50,7 @@ class ScrollSnapList extends StatefulWidget {
   final double itemSize;
 
   ///Global key that's used to call `focusToItem` method to manually trigger focus event.
+  
   final Key? key;
 
   ///Global key that passed to child ListView. Can be used for PageStorageKey

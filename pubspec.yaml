@@ -111,7 +111,7 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/icons/instagram.png"
+  image_path: "assets/icons/instagram01.jpeg"
   adaptive_icon_background: "#ffffff"
   adaptive_icon_foreground: "assets/icons/play_store_512.png"
 
