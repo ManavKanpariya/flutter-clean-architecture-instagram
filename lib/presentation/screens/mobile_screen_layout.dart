@@ -7,6 +7,7 @@ import 'package:instagram/core/resources/assets_manager.dart';
 import 'package:instagram/core/utility/injector.dart';
 import 'package:instagram/presentation/cubit/firestoreUserInfoCubit/users_info_cubit.dart';
 import 'package:instagram/presentation/cubit/postInfoCubit/post_cubit.dart';
+import 'package:instagram/presentation/pages/activity/activity_for_mobile.dart';
 import 'package:instagram/presentation/pages/messages/messages_page_for_mobile.dart';
 import 'package:instagram/presentation/pages/profile/personal_profile_page.dart';
 import 'package:instagram/presentation/pages/shop/shop_page.dart';
@@ -39,9 +40,9 @@ class _MobileScreenLayoutState extends State<MobileScreenLayout> {
             height: 40,
             items: [
               navigationBarItem(IconsAssets.home),
-              navigationBarItem(IconsAssets.messengerIcon),
+               navigationBarItem(IconsAssets.search),
               navigationBarItem(IconsAssets.addIcon, littleSmall: true),
-              navigationBarItem(IconsAssets.search),
+              navigationBarItem(IconsAssets.favorite),
               personalImageItem(),
             ]),
         controller: controller,
@@ -54,9 +55,10 @@ class _MobileScreenLayoutState extends State<MobileScreenLayout> {
             case 0:
               return homePage();
             case 1:
-              return messagesPage();
-            case 3:
               return allUsersTimLinePage();
+              
+            case 3: 
+              return ActivityPage();
             default:
               return personalProfilePage();
           }
@@ -83,14 +85,14 @@ class _MobileScreenLayoutState extends State<MobileScreenLayout> {
         ),
       );
 
-  Widget messagesPage() => CupertinoTabView(
-        builder: (context) => CupertinoPageScaffold(
-          child: BlocProvider<UsersInfoCubit>(
-            create: (context) => injector<UsersInfoCubit>(),
-            child: const MessagesPageForMobile(),
-          ),
-        ),
-      );
+  // Widget messagesPage() => CupertinoTabView(
+  //       builder: (context) => CupertinoPageScaffold(
+  //         child: BlocProvider<UsersInfoCubit>(
+  //           create: (context) => injector<UsersInfoCubit>(),
+  //           child: const MessagesPageForMobile(),
+  //         ),
+  //       ),
+  //     );
 
   Widget homePage() => CupertinoTabView(
         builder: (context) => CupertinoPageScaffold(
