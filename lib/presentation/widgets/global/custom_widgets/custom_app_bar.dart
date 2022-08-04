@@ -19,7 +19,7 @@ import 'package:instagram/presentation/widgets/global/custom_widgets/custom_gall
 import 'package:instagram/presentation/widgets/global/custom_widgets/custom_network_image_display.dart';
 
 class CustomAppBar {
-  static AppBar basicAppBar(BuildContext context) {
+  static AppBar basicAppBar(BuildContext context, ValueNotifier<bool> stopReelVideoValue) {
     return AppBar(
       backgroundColor: Theme.of(context).primaryColor,
       centerTitle: false,

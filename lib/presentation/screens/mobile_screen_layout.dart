@@ -13,6 +13,7 @@ import 'package:instagram/presentation/pages/profile/personal_profile_page.dart'
 import 'package:instagram/presentation/pages/shop/shop_page.dart';
 import 'package:instagram/presentation/pages/time_line/all_user_time_line/all_users_time_line.dart';
 import 'package:instagram/presentation/pages/time_line/my_own_time_line/home_page.dart';
+import 'package:instagram/presentation/pages/video/videos_page.dart';
 import 'package:instagram/presentation/widgets/belong_to/screens_w.dart';
 import 'package:instagram/presentation/widgets/global/custom_widgets/custom_gallery_display.dart';
 
@@ -27,6 +28,7 @@ class MobileScreenLayout extends StatefulWidget {
 class _MobileScreenLayoutState extends State<MobileScreenLayout> {
   ValueNotifier<bool> playHomeVideo = ValueNotifier(false);
   CupertinoTabController controller = CupertinoTabController();
+  ValueNotifier<bool> stopReelVideo = ValueNotifier(false);
   @override
   void initState() {
     super.initState();
@@ -41,13 +43,14 @@ class _MobileScreenLayoutState extends State<MobileScreenLayout> {
             items: [
               navigationBarItem(IconsAssets.home),
                navigationBarItem(IconsAssets.search),
-              navigationBarItem(IconsAssets.addIcon, littleSmall: true),
+              navigationBarItem(IconsAssets.video, littleSmall: true),
               navigationBarItem(IconsAssets.favorite),
               personalImageItem(),
             ]),
         controller: controller,
         tabBuilder: (context, index) {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
+            stopReelVideo.value = controller.index != 0 ? true : false;
             playHomeVideo.value = controller.index == 0 ? true : false;
           });
 
@@ -56,7 +59,8 @@ class _MobileScreenLayoutState extends State<MobileScreenLayout> {
               return homePage();
             case 1:
               return allUsersTimLinePage();
-              
+            case 2:
+              return VideosPage(stopVideo: stopReelVideo); 
             case 3: 
               return ActivityPage();
             default:
@@ -93,19 +97,26 @@ class _MobileScreenLayoutState extends State<MobileScreenLayout> {
   //         ),
   //       ),
   //     );
-
+ Widget galleryPage() => CupertinoTabView(
+    builder: (context) => const CupertinoPageScaffold(
+      child:CustomGalleryDisplay(),
+    ),
+  );
   Widget homePage() => CupertinoTabView(
-        builder: (context) => CupertinoPageScaffold(
-            child: BlocProvider<PostCubit>(
-          create: (context) => injector<PostCubit>(),
-          child: ValueListenableBuilder(
-            valueListenable: playHomeVideo,
-            builder: (context, bool playVideoValue, child) => HomePage(
-              userId: widget.userId,
-              playVideo: playVideoValue,
-            ),
+            builder: (context) => CupertinoPageScaffold(child: home()),
+      );
+
+  BlocProvider<PostCubit> home() => BlocProvider<PostCubit>(
+        create: (context) => injector<PostCubit>(),
+        child: ValueListenableBuilder(
+          valueListenable: playHomeVideo,
+          builder: (context, bool playVideoValue, child) => HomePage(
+            userId: widget.userId,
+            playVideo: playVideoValue,
+            stopReelVideoValue: stopReelVideo,
           ),
-        )),
+        
+        ),
       );
 
   BottomNavigationBarItem personalImageItem() {
