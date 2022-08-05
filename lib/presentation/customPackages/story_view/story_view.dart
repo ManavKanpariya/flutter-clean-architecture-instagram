@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
 import 'package:flutter_blurhash/flutter_blurhash.dart';
+import 'package:get/get_utils/src/extensions/internacionalization.dart';
 import 'package:instagram/core/resources/color_manager.dart';
 import 'package:instagram/core/utility/constant.dart';
 import 'package:instagram/presentation/customPackages/story_view/story_image_for_web.dart';
@@ -10,8 +10,6 @@ import 'story_image.dart';
 import 'story_video.dart';
 import 'story_controller.dart';
 import 'utils.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:octo_image/octo_image.dart';
 
 /// Indicates where the progress indicators should be placed.
 enum ProgressPosition { top, bottom }
@@ -187,19 +185,22 @@ class StoryItem {
     bool roundedBottom = false,
     Duration? duration,
   }) {
-    // OctoPlaceholderBuilder s=OctoPlaceholder.blurHash(widget.blurHash);
-    print("blurHash: $blurHash");
     return StoryItem(
       ClipRRect(
         key: key,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(roundedTop ? 8 : 0),
+          bottom: Radius.circular(roundedBottom ? 8 : 0),
+        ),
         child: Container(
           color: ColorManager.black,
           child: Stack(
             children: <Widget>[
-              SizedBox(
+              Container(
                 height: double.infinity,
                 width: double.infinity,
-                child: BlurHash(hash: blurHash),
+                color: blurHash.isEmpty ? ColorManager.black : null,
+                child: blurHash.isNotEmpty ? BlurHash(hash: blurHash) : null,
               ),
               if (isThatMobile) ...[
                 StoryImage.url(
@@ -219,17 +220,13 @@ class StoryItem {
                 child: Align(
                   alignment: Alignment.bottomLeft,
                   child: SizedBox(
-                    child: caption ?? const SizedBox(),
                     width: double.infinity,
+                    child: caption ?? const SizedBox(),
                   ),
                 ),
               ),
             ],
           ),
-        ),
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(roundedTop ? 8 : 0),
-          bottom: Radius.circular(roundedBottom ? 8 : 0),
         ),
       ),
       blurHashBackground: blurHash,
@@ -368,10 +365,7 @@ class StoryItem {
               top: Radius.circular(roundedTop ? 8 : 0),
               bottom: Radius.circular(roundedBottom ? 8 : 0),
             ),
-            image: DecorationImage(
-              image: image,
-              fit: BoxFit.cover,
-            )),
+            image: DecorationImage(image: image, fit:BoxFit.cover)),
         child: Container(
           margin: const EdgeInsetsDirectional.only(bottom: 16),
           padding: const EdgeInsetsDirectional.only(
@@ -379,8 +373,8 @@ class StoryItem {
           child: Align(
             alignment: Alignment.bottomLeft,
             child: SizedBox(
-              child: caption ?? const SizedBox(),
               width: double.infinity,
+              child: caption ?? const SizedBox(),
             ),
           ),
         ),
@@ -602,11 +596,11 @@ class StoryViewState extends State<StoryView> with TickerProviderStateMixin {
       _animationController!.stop();
 
       // get last showing
-      final _last = _currentStory;
+      final last = _currentStory;
 
-      if (_last != null) {
-        _last.shown = true;
-        if (_last != widget.storyItems.last) {
+      if (last != null) {
+        last.shown = true;
+        if (last != widget.storyItems.last) {
           _beginPlay();
         }
       }
@@ -666,65 +660,70 @@ class StoryViewState extends State<StoryView> with TickerProviderStateMixin {
               ),
             ),
           ),
-          // Align(
-          //     alignment: Alignment.centerRight,
-          //     heightFactor: 1,
-          //     child: GestureDetector(
-          //       onTapDown: (details) {
-          //         widget.controller.pause();
-          //       },
-          //       onTapCancel: () {
-          //         widget.controller.play();
-          //       },
-          //       onTapUp: (details) {
-          //         // if debounce timed out (not active) then continue anim
-          //
-          //         if (_nextDebouncer?.isActive == false) {
-          //           widget.controller.play();
-          //         } else {
-          //           // widget.controller.next();
-          //         }
-          //       },
-          //       onVerticalDragStart: widget.onVerticalSwipeComplete == null
-          //           ? null
-          //           : (details) {
-          //               widget.controller.pause();
-          //             },
-          //       onVerticalDragCancel: widget.onVerticalSwipeComplete == null
-          //           ? null
-          //           : () {
-          //               widget.controller.play();
-          //             },
-          //       onVerticalDragUpdate: widget.onVerticalSwipeComplete == null
-          //           ? null
-          //           : (details) {
-          //               verticalDragInfo ??= VerticalDragInfo();
-          //
-          //               verticalDragInfo!.update(details.primaryDelta!);
-          //             },
-          //       onVerticalDragEnd: widget.onVerticalSwipeComplete == null
-          //           ? null
-          //           : (details) {
-          //               widget.controller.play();
-          //               // finish up drag cycle
-          //               if (!verticalDragInfo!.cancel &&
-          //                   widget.onVerticalSwipeComplete != null) {
-          //                 widget.onVerticalSwipeComplete!(
-          //                     verticalDragInfo!.direction);
-          //               }
-          //
-          //               verticalDragInfo = null;
-          //             },
-          //     )),
-          // Align(
-          //   alignment: Alignment.centerLeft,
-          //   heightFactor: 1,
-          //   child: SizedBox(
-          //       child: GestureDetector(onTap: () {
-          //         // widget.controller.previous();
-          //       }),
-          //       width: 70),
-          // ),
+          if (isThatMobile) ...[
+            Align(
+              alignment: Alignment.centerRight,
+              heightFactor: 1,
+              child: GestureDetector(
+                onTapDown: (details) {
+                  widget.controller.pause();
+                },
+                onTapCancel: () {
+                  widget.controller.play();
+                },
+                onTapUp: (details) {
+                  // if debounce timed out (not active) then continue anim
+
+                  if (_nextDebouncer?.isActive == false) {
+                    widget.controller.play();
+                  } else {
+                    widget.controller.next();
+                  }
+                },
+                onVerticalDragStart: widget.onVerticalSwipeComplete == null
+                    ? null
+                    : (details) {
+                        widget.controller.pause();
+                      },
+                onVerticalDragCancel: widget.onVerticalSwipeComplete == null
+                    ? null
+                    : () {
+                        widget.controller.play();
+                      },
+                onVerticalDragUpdate: widget.onVerticalSwipeComplete == null
+                    ? null
+                    : (details) {
+                        verticalDragInfo ??= VerticalDragInfo();
+
+                        verticalDragInfo!.update(details.primaryDelta!);
+                      },
+                onVerticalDragEnd: widget.onVerticalSwipeComplete == null
+                    ? null
+                    : (details) {
+                        widget.controller.play();
+                        // finish up drag cycle
+                        if (!verticalDragInfo!.cancel &&
+                            widget.onVerticalSwipeComplete != null) {
+                          widget.onVerticalSwipeComplete!(
+                              verticalDragInfo!.direction);
+                        }
+
+                        verticalDragInfo = null;
+                      },
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              heightFactor: 1,
+              child: SizedBox(
+                  width: 70,
+                  child: GestureDetector(
+                    onTap: () {
+                      widget.controller.previous();
+                    },
+                  )),
+            ),
+          ],
         ],
       ),
     );
