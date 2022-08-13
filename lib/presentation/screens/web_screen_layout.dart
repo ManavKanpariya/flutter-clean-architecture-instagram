@@ -84,9 +84,9 @@ class _WebScreenLayoutState extends State<WebScreenLayout> {
             child: widget.body ??
                 PageView(
                   physics: const NeverScrollableScrollPhysics(),
-                  children: homeScreenItems(),
                   controller: pageController,
                   onPageChanged: onPageChanged,
+                  children: homeScreenItems(),
                 ),
           ),
         ],
@@ -135,7 +135,8 @@ class _WebScreenLayoutState extends State<WebScreenLayout> {
               ),
               const SizedBox(width: 5),
               IconButton(
-                icon: icons(IconsAssets.messengerIcon, pageOfController == 1),
+                icon: icons(IconsAssets.messengerIcon, pageOfController == 1,
+                    biggerIcon: true),
                 onPressed: () => navigationTapped(1),
               ),
               const SizedBox(width: 5),
@@ -267,10 +268,10 @@ class _WebScreenLayoutState extends State<WebScreenLayout> {
         const _PersonalProfilePage(),
       ];
 
-  SvgPicture icons(String icon, bool value) {
+  SvgPicture icons(String icon, bool value, {bool biggerIcon = false}) {
     return SvgPicture.asset(
       icon,
-      height: 25,
+      height: biggerIcon ? 28 : 25,
       color: Theme.of(context).focusColor,
     );
   }
@@ -283,7 +284,7 @@ class _HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider<PostCubit>(
       create: (context) => injector<PostCubit>(),
-      child: HomePage(userId: myPersonalId,stopReelVideoValue: ValueNotifier(false)),
+      child: HomePage(userId: myPersonalId),
     );
   }
 }

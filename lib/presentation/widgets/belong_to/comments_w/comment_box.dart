@@ -13,18 +13,19 @@ import 'package:instagram/data/models/user_personal_info.dart';
 import 'package:instagram/presentation/cubit/notification/notification_cubit.dart';
 import 'package:instagram/presentation/cubit/postInfoCubit/commentsInfo/cubit/comments_info_cubit.dart';
 import 'package:instagram/presentation/cubit/postInfoCubit/commentsInfo/cubit/repliesInfo/reply_info_cubit.dart';
+import 'package:instagram/presentation/cubit/postInfoCubit/post_cubit.dart';
 import 'package:instagram/presentation/widgets/global/circle_avatar_image/circle_avatar_of_profile_image.dart';
 
 class CommentBox extends StatefulWidget {
   final Post postInfo;
-  ValueNotifier<FocusNode> currentFocus;
+  final ValueNotifier<FocusNode> currentFocus;
   final bool isThatCommentScreen;
   final Comment? selectedCommentInfo;
   final UserPersonalInfo userPersonalInfo;
   final TextEditingController textController;
   final ValueChanged<bool> makeSelectedCommentNullable;
   final bool expandCommentBox;
-  CommentBox({
+  const CommentBox({
     Key? key,
     required this.currentFocus,
     this.expandCommentBox = false,
@@ -136,9 +137,9 @@ class _CommentBoxState extends State<CommentBox> {
   }
 
   Future<void> postTheComment(UserPersonalInfo myPersonalInfo) async {
-    final _whitespaceRE = RegExp(r"\s+");
+    final whitespaceRE = RegExp(r"\s+");
     String textWithOneSpaces =
-        widget.textController.text.replaceAll(_whitespaceRE, " ");
+        widget.textController.text.replaceAll(whitespaceRE, " ");
 
     if (widget.selectedCommentInfo == null) {
       CommentsInfoCubit commentsInfoCubit =
@@ -152,9 +153,14 @@ class _CommentBoxState extends State<CommentBox> {
       await ReplyInfoCubit.get(context)
           .replyOnThisComment(replyInfo: replyInfo);
       widget.makeSelectedCommentNullable(false);
+      if (!mounted) return;
+      await PostCubit.get(context).updatePostInfo(postInfo: widget.postInfo);
     }
+    if (!mounted) return;
+
     BlocProvider.of<NotificationCubit>(context).createNotification(
         newNotification: createNotification(textWithOneSpaces, myPersonalInfo));
+    setState(() {});
   }
 
   CustomNotification createNotification(

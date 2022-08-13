@@ -50,7 +50,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<FirestoreUserInfoCubit, FirestoreUserInfoState>(
+    return BlocBuilder<UserInfoCubit, FirestoreUserInfoState>(
       buildWhen: (previous, current) {
         if (previous != current && (current is CubitMyPersonalInfoLoaded)) {
           return true;
@@ -63,8 +63,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         return false;
       },
       builder: (context, getUserState) {
-        FirestoreUserInfoCubit updateUserCubit =
-            FirestoreUserInfoCubit.get(context);
+        UserInfoCubit updateUserCubit = UserInfoCubit.get(context);
 
         if (getUserState is CubitGetUserInfoFailed) {
           ToastShow.toastStateError(getUserState);
@@ -84,10 +83,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Scaffold buildScaffold(
-      BuildContext context,
-      FirestoreUserInfoState getUserState,
-      FirestoreUserInfoCubit updateUserCubit) {
+  Scaffold buildScaffold(BuildContext context,
+      FirestoreUserInfoState getUserState, UserInfoCubit updateUserCubit) {
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
       appBar: isThatMobile
@@ -102,7 +99,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   AppBar buildAppBar(BuildContext context, FirestoreUserInfoState getUserState,
-      FirestoreUserInfoCubit updateUserCubit) {
+      UserInfoCubit updateUserCubit) {
     return AppBar(
         iconTheme: IconThemeData(color: Theme.of(context).focusColor),
         elevation: 0,
@@ -125,7 +122,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   List<Widget> actionsWidgets(
-      dynamic getUserState, FirestoreUserInfoCubit updateUserCubit) {
+      dynamic getUserState, UserInfoCubit updateUserCubit) {
     return [
       getUserState is! CubitMyPersonalInfoLoaded
           ? Transform.scale(
@@ -142,17 +139,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       charactersOfName + [name.substring(0, i + 1)];
                 }
                 UserPersonalInfo updatedUserInfo = UserPersonalInfo(
-                    followerPeople: widget.userInfo.followerPeople,
-                    followedPeople: widget.userInfo.followedPeople,
-                    posts: widget.userInfo.posts,
-                    userName: widget.userNameController.text,
-                    name: widget.nameController.text,
-                    bio: widget.bioController.text,
-                    profileImageUrl: widget.userInfo.profileImageUrl,
-                    email: widget.userInfo.email,
-                    charactersOfName: charactersOfName,
-                    stories: widget.userInfo.stories,
-                    userId: widget.userInfo.userId);
+                  followerPeople: widget.userInfo.followerPeople,
+                  followedPeople: widget.userInfo.followedPeople,
+                  posts: widget.userInfo.posts,
+                  userName: widget.userNameController.text,
+                  name: widget.nameController.text,
+                  bio: widget.bioController.text,
+                  profileImageUrl: widget.userInfo.profileImageUrl,
+                  email: widget.userInfo.email,
+                  charactersOfName: charactersOfName,
+                  stories: widget.userInfo.stories,
+                  userId: widget.userInfo.userId,
+                  devicesTokens: widget.userInfo.devicesTokens,
+                );
                 await updateUserCubit
                     .updateUserInfo(updatedUserInfo)
                     .whenComplete(() {
@@ -171,7 +170,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Expanded circleAvatarAndTextFields(
-      BuildContext context, FirestoreUserInfoCubit updateUserCubit) {
+      BuildContext context, UserInfoCubit updateUserCubit) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsetsDirectional.all(10),
@@ -183,8 +182,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Widget textFieldsColumn(
-      BuildContext context, FirestoreUserInfoCubit updateUserCubit) {
+  Widget textFieldsColumn(BuildContext context, UserInfoCubit updateUserCubit) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -264,14 +262,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
         backgroundImage: isImageUpload && hasUserPhoto
             ? NetworkImage(widget.userInfo.profileImageUrl)
             : null,
+        radius: 50,
+        backgroundColor: Theme.of(context).focusColor,
         child: ClipOval(
             child: !isImageUpload
                 ? const ThineCircularProgress()
                 : (!hasUserPhoto
                     ? Icon(Icons.person, color: Theme.of(context).primaryColor)
                     : null)),
-        radius: 50,
-        backgroundColor: Theme.of(context).focusColor,
       ),
     );
   }

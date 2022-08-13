@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:instagram/config/routes/app_routes.dart';
@@ -15,6 +14,7 @@ import 'package:instagram/data/models/post.dart';
 import 'package:instagram/data/models/user_personal_info.dart';
 import 'package:instagram/presentation/cubit/notification/notification_cubit.dart';
 import 'package:instagram/presentation/cubit/postInfoCubit/commentsInfo/cubit/comments_info_cubit.dart';
+import 'package:instagram/presentation/cubit/postInfoCubit/post_cubit.dart';
 import 'package:instagram/presentation/pages/comments/comments_for_mobile.dart';
 import 'package:instagram/presentation/widgets/belong_to/comments_w/comment_box.dart';
 import 'package:instagram/presentation/widgets/global/circle_avatar_image/circle_avatar_of_profile_image.dart';
@@ -228,19 +228,24 @@ class _PostOfTimeLineState extends State<PostOfTimeLine>
   }
 
   Future<void> postTheComment(UserPersonalInfo userInfo) async {
-    final _whitespaceRE = RegExp(r"\s+");
+    final whitespaceRE = RegExp(r"\s+");
     String textWithOneSpaces =
-        commentTextController.value.text.replaceAll(_whitespaceRE, " ");
+        commentTextController.value.text.replaceAll(whitespaceRE, " ");
 
     CommentsInfoCubit commentsInfoCubit =
         BlocProvider.of<CommentsInfoCubit>(context);
     await commentsInfoCubit.addComment(
         commentInfo: newCommentInfo(userInfo, textWithOneSpaces));
     makeSelectedCommentNullable(true);
+    if (!mounted) return;
+
+    await PostCubit.get(context)
+        .updatePostInfo(postInfo: widget.postInfo.value);
+    if (!mounted) return;
 
     BlocProvider.of<NotificationCubit>(context).createNotification(
         newNotification: createNotification(textWithOneSpaces, userInfo));
-    // To rebuild number of comments
+    /// To rebuild number of comments
     setState(() {});
   }
 
@@ -278,7 +283,8 @@ class _PostOfTimeLineState extends State<PostOfTimeLine>
       child: GestureDetector(
         onTap: () {
           if (isThatMobile) {
-            pushToPage(context, page:  CommentsPageForMobile(postInfo: postInfo));
+            pushToPage(context,
+                page: CommentsPageForMobile(postInfo: postInfo));
           } else {
             Navigator.of(
               context,

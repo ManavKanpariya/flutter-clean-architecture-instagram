@@ -14,7 +14,7 @@ class FirebaseStoragePost {
     final ref = firebase_storage.FirebaseStorage.instance.ref(destination);
     UploadTask uploadTask =
         postFile != null ? ref.putFile(postFile) : ref.putData(postUint8List);
-   String fileOfPostUrl =
+    String fileOfPostUrl =
         await (await uploadTask.whenComplete(() {})).ref.getDownloadURL();
     return fileOfPostUrl;
   }

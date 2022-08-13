@@ -14,12 +14,12 @@ import 'package:instagram/presentation/customPackages/story_view/utils.dart';
 import 'package:instagram/presentation/widgets/belong_to/story_w/story_swipe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class StoryPage extends StatefulWidget {
+class StoryPageForMobile extends StatefulWidget {
   final UserPersonalInfo user;
   final List<UserPersonalInfo> storiesOwnersInfo;
   final String hashTag;
 
-  const StoryPage({
+  const StoryPageForMobile({
     required this.user,
     required this.storiesOwnersInfo,
     this.hashTag = "",
@@ -27,10 +27,10 @@ class StoryPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _StoryPageState createState() => _StoryPageState();
+  StoryPageForMobileState createState() => StoryPageForMobileState();
 }
 
-class _StoryPageState extends State<StoryPage> {
+class StoryPageForMobileState extends State<StoryPageForMobile> {
   late PageController controller;
 
   @override
@@ -83,10 +83,10 @@ class StoryWidget extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _StoryWidgetState createState() => _StoryWidgetState();
+  StoryWidgetState createState() => StoryWidgetState();
 }
 
-class _StoryWidgetState extends State<StoryWidget> {
+class StoryWidgetState extends State<StoryWidget> {
   final SharedPreferences _sharePrefs = injector<SharedPreferences>();
 
   bool shownThem = true;
@@ -105,10 +105,9 @@ class _StoryWidgetState extends State<StoryWidget> {
             blurHash: story.blurHash,
             url: story.storyUrl,
             controller: controller.value,
+            imageFit: BoxFit.fitWidth,
             caption: Text(story.caption),
-            duration: const Duration(
-              milliseconds: 5000,
-            ),
+            duration: const Duration(milliseconds: 5000),
           ));
           break;
         case false:
@@ -116,9 +115,7 @@ class _StoryWidgetState extends State<StoryWidget> {
             StoryItem.text(
               title: story.caption,
               backgroundColor: Colors.black,
-              duration: const Duration(
-                milliseconds: 5000,
-              ),
+              duration: const Duration(milliseconds: 5000),
             ),
           );
           break;
@@ -192,7 +189,7 @@ class _StoryWidgetState extends State<StoryWidget> {
                           onVerticalSwipeComplete: (direction) {
                             if (direction == Direction.down ||
                                 direction == Direction.up) {
-                              Navigator.maybePop(context);
+                              Navigator.of(context).maybePop();
                             }
                           },
                           onStoryShow: (storyItem) {

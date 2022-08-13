@@ -1,11 +1,11 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:instagram/config/routes/app_routes.dart';
-import 'package:instagram/core/functions/image_picker.dart';
 import 'package:instagram/core/resources/assets_manager.dart';
 import 'package:instagram/core/resources/color_manager.dart';
 import 'package:instagram/core/resources/strings_manager.dart';
@@ -16,18 +16,20 @@ import 'package:instagram/presentation/cubit/follow/follow_cubit.dart';
 import 'package:instagram/presentation/cubit/postInfoCubit/postLikes/post_likes_cubit.dart';
 import 'package:instagram/presentation/cubit/postInfoCubit/post_cubit.dart';
 import 'package:instagram/presentation/pages/comments/comments_for_mobile.dart';
+import 'package:instagram/presentation/pages/profile/create_post_page.dart';
 import 'package:instagram/presentation/pages/profile/users_who_likes_for_mobile.dart';
 import 'package:instagram/presentation/widgets/belong_to/profile_w/which_profile_page.dart';
 import 'package:instagram/presentation/widgets/belong_to/videos_w/reel_video_play.dart';
 import 'package:instagram/core/functions/toast_show.dart';
 import 'package:shimmer/shimmer.dart';
-
+import 'package:video_thumbnail/video_thumbnail.dart';
 import '../../../core/utility/constant.dart';
 
 class VideosPage extends StatefulWidget {
   final ValueNotifier<bool> stopVideo;
-
-  const VideosPage({Key? key, required this.stopVideo}) : super(key: key);
+  final Post? clickedVideo;
+  const VideosPage({Key? key, required this.stopVideo, this.clickedVideo})
+      : super(key: key);
 
   @override
   VideosPageState createState() => VideosPageState();
@@ -45,7 +47,12 @@ class VideosPageState extends State<VideosPage> {
           valueListenable: rebuildUserInfo,
           builder: (context, bool rebuildValue, child) =>
               BlocBuilder<PostCubit, PostState>(
-                bloc: BlocProvider.of<PostCubit>(context)..getAllPostInfo(),
+                bloc: BlocProvider.of<PostCubit>(context)
+                  ..getAllPostInfo(
+                      isVideosWantedOnly: true,
+                      skippedVideoUid: widget.clickedVideo != null
+                          ? widget.clickedVideo!.postUid
+                          : ""),
                 buildWhen: (previous, current) {
                   if (previous != current && current is CubitAllPostsLoaded) {
                     return true;
@@ -79,19 +86,35 @@ class VideosPageState extends State<VideosPage> {
     );
   }
 
-  AppBar appBar() =>
-      AppBar(backgroundColor: ColorManager.transparent, actions: [
-        IconButton(
-          onPressed: () async {
-            Uint8List? pickVideo = await videoCameraPicker();
-            if (pickVideo == null) {
-              ToastShow.toast(StringsManager.noImageSelected.tr());
-            }
-          },
-          icon:
-              const Icon(Icons.camera_alt, size: 30, color: ColorManager.white),
-        )
-      ]);
+  AppBar appBar() => AppBar(
+        backgroundColor: ColorManager.transparent,
+        actions: [
+          IconButton(
+            onPressed: () async {
+              final XFile? pickedFile =
+                  await ImagePicker().pickVideo(source: ImageSource.camera);
+              if (pickedFile != null) {
+                final File video = File(pickedFile.path);
+                final convertImage = await VideoThumbnail.thumbnailData(
+                  video: video.path,
+                  imageFormat: ImageFormat.PNG,
+                );
+                Uint8List convertVideo = await video.readAsBytes();
+                if (!mounted) return;
+                pushToPage(context,
+                    page: CreatePostPage(
+                      aspectRatio: 1,
+                      multiSelectedFiles: [convertVideo],
+                      isThatImage: false,
+                      coverOfVideoBytes: convertImage,
+                    ));
+              }
+            },
+            icon: const Icon(Icons.camera_alt,
+                size: 30, color: ColorManager.white),
+          )
+        ],
+      );
   Widget loadingWidget() {
     return Stack(
       children: [
@@ -130,14 +153,12 @@ class VideosPageState extends State<VideosPage> {
     );
   }
 
-  Widget buildBody(List<Post> postsInfo) {
-    List<Post> videosPostsInfo =
-        postsInfo.where((element) => element.isThatImage == false).toList();
+  Widget buildBody(List<Post> videosInfo) {
     return PageView.builder(
       scrollDirection: Axis.vertical,
-      itemCount: videosPostsInfo.length,
+      itemCount: videosInfo.length,
       itemBuilder: (context, index) {
-        ValueNotifier<Post> videoInfo = ValueNotifier(videosPostsInfo[index]);
+        ValueNotifier<Post> videoInfo = ValueNotifier(videosInfo[index]);
         return Stack(children: [
           SizedBox(
               height: double.infinity,
@@ -148,8 +169,8 @@ class VideosPageState extends State<VideosPage> {
                   stopVideo: stopVideoValue,
                 ),
               )),
-          _HorizontalButtons(videoInfo: videoInfo, stopVideo: widget.stopVideo),
           _VerticalButtons(videoInfo: videoInfo, stopVideo: widget.stopVideo),
+          _HorizontalButtons(videoInfo: videoInfo, stopVideo: widget.stopVideo),
         ]);
       },
     );
@@ -160,12 +181,12 @@ class _HorizontalButtons extends StatefulWidget {
   final ValueNotifier<Post> videoInfo;
   final ValueNotifier<bool> stopVideo;
 
-   const _HorizontalButtons(
+  const _HorizontalButtons(
       {Key? key, required this.videoInfo, required this.stopVideo})
       : super(key: key);
 
   @override
-   State<_HorizontalButtons> createState() => _HorizontalButtonsState();
+  State<_HorizontalButtons> createState() => _HorizontalButtonsState();
 }
 
 class _HorizontalButtonsState extends State<_HorizontalButtons> {
@@ -220,7 +241,7 @@ class _HorizontalButtonsState extends State<_HorizontalButtons> {
                   )),
               const SizedBox(height: 10),
               Text(videoInfoValue.caption,
-                 style: getNormalStyle(color: ColorManager.white)),
+                  style: getNormalStyle(color: ColorManager.white)),
             ],
           );
         },
@@ -229,7 +250,7 @@ class _HorizontalButtonsState extends State<_HorizontalButtons> {
   }
 
   goToUserProfile(UserPersonalInfo personalInfo) async {
-     await pushToPage(context,
+    await pushToPage(context,
         page: WhichProfilePage(
             userId: personalInfo.userId, userName: personalInfo.userName),
         withoutRoot: false);
@@ -240,16 +261,16 @@ class _HorizontalButtonsState extends State<_HorizontalButtons> {
     return ValueListenableBuilder(
       valueListenable: isFollowed,
       builder: (context, bool? isFollowedValue, child) => GestureDetector(
-          onTap: () async{
+          onTap: () async {
             if (personalInfo.followerPeople.contains(myPersonalId) ||
                 isFollowedValue == null ||
                 isFollowedValue == true) {
-            await   BlocProvider.of<FollowCubit>(context).unFollowThisUser(
+              await BlocProvider.of<FollowCubit>(context).unFollowThisUser(
                   followingUserId: personalInfo.userId,
                   myPersonalId: myPersonalId);
               isFollowed.value = false;
             } else {
-            await   BlocProvider.of<FollowCubit>(context).followThisUser(
+              await BlocProvider.of<FollowCubit>(context).followThisUser(
                   followingUserId: personalInfo.userId,
                   myPersonalId: myPersonalId);
               isFollowed.value = true;
@@ -373,7 +394,7 @@ class _VerticalButtonsState extends State<_VerticalButtons> {
   Widget numberOfLikes(Post videoInfo) {
     return InkWell(
       onTap: () async {
-         await pushToPage(context,
+        await pushToPage(context,
             page: UsersWhoLikesForMobile(
               showSearchBar: true,
               usersIds: videoInfo.likes,

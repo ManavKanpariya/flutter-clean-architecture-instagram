@@ -53,6 +53,7 @@ class _ProfilePageState extends State<PersonalProfilePage> {
   @override
   void initState() {
     darkTheme.value = ThemeMode.dark == ThemeOfApp().theme;
+
     super.initState();
   }
 
@@ -63,9 +64,9 @@ class _ProfilePageState extends State<PersonalProfilePage> {
 
   Future<void> getData() async {
     widget.userName.isNotEmpty
-        ? (await BlocProvider.of<FirestoreUserInfoCubit>(context)
+        ? (await BlocProvider.of<UserInfoCubit>(context)
             .getUserFromUserName(widget.userName))
-        : (await BlocProvider.of<FirestoreUserInfoCubit>(context)
+        : (await BlocProvider.of<UserInfoCubit>(context)
             .getUserInfo(widget.personalId));
     rebuildUserInfo.value = true;
   }
@@ -76,11 +77,11 @@ class _ProfilePageState extends State<PersonalProfilePage> {
       child: ValueListenableBuilder(
         valueListenable: rebuildUserInfo,
         builder: (context, bool rebuildValue, child) =>
-            BlocBuilder<FirestoreUserInfoCubit, FirestoreUserInfoState>(
+            BlocBuilder<UserInfoCubit, FirestoreUserInfoState>(
           bloc: widget.userName.isNotEmpty
-              ? (BlocProvider.of<FirestoreUserInfoCubit>(context)
+              ? (BlocProvider.of<UserInfoCubit>(context)
                 ..getUserFromUserName(widget.userName))
-              : (BlocProvider.of<FirestoreUserInfoCubit>(context)
+              : (BlocProvider.of<UserInfoCubit>(context)
                 ..getUserInfo(widget.personalId)),
           buildWhen: (previous, current) {
             if (previous != current && current is CubitMyPersonalInfoLoaded) {
@@ -218,11 +219,11 @@ class _ProfilePageState extends State<PersonalProfilePage> {
   }
 
   GestureDetector changeLanguage() {
-    final AppPreferences _appPreferences = injector<AppPreferences>();
+    final AppPreferences appPreferences = injector<AppPreferences>();
 
     return GestureDetector(
       onTap: () {
-        _appPreferences.changeAppLanguage();
+        appPreferences.changeAppLanguage();
         Phoenix.rebirth(context);
       },
       child: createSizedBox(StringsManager.changeLanguage.tr(),
@@ -266,7 +267,10 @@ class _ProfilePageState extends State<PersonalProfilePage> {
         child: createSizedBox(StringsManager.logOut.tr(),
             icon: Icons.logout_rounded),
         onTap: () async {
-          authCubit.signOut();
+          String? token = sharePrefs.getString("deviceToken");
+
+          await authCubit.signOut(
+              userId: widget.personalId, deviceToken: token);
         },
       );
     });

@@ -30,7 +30,7 @@ class _ImagesSliderState extends State<ImagesSlider> {
   final CarouselController _controller = CarouselController();
   @override
   void didChangeDependencies() {
-       if (widget.imagesUrls.isNotEmpty) {
+    if (widget.imagesUrls.isNotEmpty) {
       widget.imagesUrls.map((url) => precacheImage(NetworkImage(url), context));
     }
     super.didChangeDependencies();

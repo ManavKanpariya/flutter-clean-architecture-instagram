@@ -35,7 +35,7 @@ class _PopupNewPostState extends State<PopupNewPost> {
   final imagesControllerNotifier = ValueNotifier(false);
 
   ScrollController imagesController = ScrollController();
-  final _cropKey = GlobalKey<CropState>();
+  final _cropKey = GlobalKey<WebCustomCropState>();
   int indexOfSelectedImage = 0;
   CreatePostButton createPostButton = CreatePostButton.none;
   TextEditingController textController = TextEditingController();
@@ -151,8 +151,8 @@ class _PopupNewPostState extends State<PopupNewPost> {
               valueListenable: isItDone,
               builder: (context, bool isItDoneValue, child) => isItDoneValue
                   ? Builder(builder: (context) {
-                FirestoreUserInfoCubit userCubit =
-                BlocProvider.of<FirestoreUserInfoCubit>(context,
+                UserInfoCubit userCubit =
+                BlocProvider.of<UserInfoCubit>(context,
                     listen: false);
                 UserPersonalInfo? personalInfo = userCubit.myPersonalInfo;
 
@@ -176,7 +176,7 @@ class _PopupNewPostState extends State<PopupNewPost> {
   }
 
   Future<void> onTapButton(UserPersonalInfo personalInfo,
-      FirestoreUserInfoCubit userCubit, BuildContext builder2context) async {
+      UserInfoCubit userCubit, BuildContext builder2context) async {
     if (createPostButton == CreatePostButton.share) {
       // double aspect = expandImage.value ? 6 / 8 : 1.0;
       if (!multiSelectionMode.value) {
@@ -184,8 +184,11 @@ class _PopupNewPostState extends State<PopupNewPost> {
         // Uint8List? croppedImage = await cropImage(selectedImage.value!);
         if (selectedImage.value != null) {
           selectedImages.value = [selectedImage.value!];
+          // String pathFile=File.fromRawPath( selectedImage.value!).path;
+          // Uint8List? croppedImage=await croppedImageForWeb(builder2context,pathFile);
+          // selectedImage.value =croppedImage;
+
           setState(() {
-            selectedImage.value = selectedImage.value!;
           });
           // SelectedImageDetails details = SelectedImageDetails(
           //   selectedFile: croppedImage,
@@ -226,7 +229,7 @@ class _PopupNewPostState extends State<PopupNewPost> {
   }
 
   Future<void> createPost(UserPersonalInfo personalInfo,
-      FirestoreUserInfoCubit userCubit, BuildContext builder2context) async {
+      UserInfoCubit userCubit, BuildContext builder2context) async {
     WidgetsBinding.instance
         .addPostFrameCallback((_) => setState(() => isItDone.value = false));
     String blurHash = await blurHashEncode(selectedImage.value!);
@@ -364,7 +367,7 @@ class _PopupNewPostState extends State<PopupNewPost> {
           child: ValueListenableBuilder(
             valueListenable: imageAspectRatio,
             builder: (context, double imageAspectRatioValue, child) =>
-                Crop.memory(
+                WebCustomCrop.memory(
                   selectedImageValue,
                   key: _cropKey,
                   aspectRatio: imageAspectRatioValue,
@@ -619,16 +622,16 @@ class _PopupNewPostState extends State<PopupNewPost> {
         });
       },
       child: Container(
+        decoration: BoxDecoration(
+          color: ColorManager.white,
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Icon(
           isThatBack
               ? Icons.arrow_back_ios_rounded
               : Icons.arrow_forward_ios_rounded,
           color: ColorManager.black,
           size: 20,
-        ),
-        decoration: BoxDecoration(
-          color: ColorManager.white,
-          borderRadius: BorderRadius.circular(10),
         ),
       ),
     );

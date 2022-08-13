@@ -1,15 +1,14 @@
-import 'package:flutter/cupertino.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get/get_utils/src/extensions/internacionalization.dart';
 import 'package:instagram/config/routes/app_routes.dart';
-import 'package:instagram/core/resources/strings_manager.dart';
-import 'package:instagram/core/utility/injector.dart';
 import 'package:instagram/core/widgets/svg_pictures.dart';
 import 'package:instagram/core/resources/assets_manager.dart';
+import 'package:instagram/core/resources/strings_manager.dart';
 import 'package:instagram/core/resources/styles_manager.dart';
+import 'package:instagram/core/utility/injector.dart';
 import 'package:instagram/data/models/user_personal_info.dart';
 import 'package:instagram/presentation/cubit/firestoreUserInfoCubit/users_info_cubit.dart';
 import 'package:instagram/presentation/pages/activity/activity_for_mobile.dart';
@@ -19,7 +18,7 @@ import 'package:instagram/presentation/widgets/global/custom_widgets/custom_gall
 import 'package:instagram/presentation/widgets/global/custom_widgets/custom_network_image_display.dart';
 
 class CustomAppBar {
-  static AppBar basicAppBar(BuildContext context, ValueNotifier<bool> stopReelVideoValue) {
+  static AppBar basicAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: Theme.of(context).primaryColor,
       centerTitle: false,
@@ -27,7 +26,7 @@ class CustomAppBar {
       title: const InstagramLogo(),
       actions: [
         Padding(
-          padding: const EdgeInsetsDirectional.only(end: 10.0),
+          padding: const EdgeInsetsDirectional.only(end: 13.0),
           child: PopupMenuButton<int>(
             position: PopupMenuPosition.under,
             elevation: 20,
@@ -48,7 +47,7 @@ class CustomAppBar {
                   children: [
                     Expanded(
                       child: Text(
-                        StringsManager.post.tr,
+                        StringsManager.post.tr(),
                         style:
                             getMediumStyle(color: Theme.of(context).focusColor),
                       ),
@@ -64,7 +63,7 @@ class CustomAppBar {
                   children: [
                     Expanded(
                       child: Text(
-                        StringsManager.story.tr,
+                        StringsManager.story.tr(),
                         style:
                             getMediumStyle(color: Theme.of(context).focusColor),
                       ),
@@ -83,7 +82,7 @@ class CustomAppBar {
                   children: [
                     Expanded(
                       child: Text(
-                        StringsManager.reel.tr,
+                        StringsManager.reel.tr(),
                         style:
                             getMediumStyle(color: Theme.of(context).focusColor),
                       ),
@@ -102,7 +101,7 @@ class CustomAppBar {
                   children: [
                     Expanded(
                       child: Text(
-                        StringsManager.live.tr,
+                        StringsManager.live.tr(),
                         style:
                             getMediumStyle(color: Theme.of(context).focusColor),
                       ),
@@ -118,31 +117,41 @@ class CustomAppBar {
             ],
           ),
         ),
-        IconButton(
-          icon: SvgPicture.asset(
-            IconsAssets.messengerIcon,
-            color: Theme.of(context).focusColor,
-            height: 25,
+        Padding(
+          padding: const EdgeInsetsDirectional.only(end: 13.0),
+          child: GestureDetector(
+            child: SvgPicture.asset(
+              IconsAssets.favorite,
+              color: Theme.of(context).focusColor,
+              height: 30,
+            ),
+            onTap: () {
+              pushToPage(context, page: const ActivityPage(), withoutRoot: false);
+            },
           ),
-          onPressed: () {
-            pushToPage(context, page:   MessagesPageForMobile(), withoutRoot: false);
-          },
         ),
-      //  const SizedBox(width: 5),
+        Padding(
+          padding: const EdgeInsetsDirectional.only(end: 5.0),
+          child: GestureDetector(
+            child: SvgPicture.asset(
+              IconsAssets.messengerIcon,
+              color: Theme.of(context).focusColor,
+              height: 22.5,
+            ),
+            onTap: () {
+              pushToPage(context,
+                  page: BlocProvider<UsersInfoCubit>(
+                    create: (context) => injector<UsersInfoCubit>(),
+                    child: const MessagesPageForMobile(),
+                  ));
+            },
+          ),
+        ),
+        const SizedBox(width: 5),
       ],
     );
   }
-  
-  // Widget messagesPage() => CupertinoTabView(
-  //       builder: (context) => CupertinoPageScaffold(
-  //         child: BlocProvider<UsersInfoCubit>(
-  //           create: (context) => injector<UsersInfoCubit>(),
-  //           child: const ,
-  //         ),
-  //       ),
-  //     );
 
-  
   static void onSelected(BuildContext context, int item) {
     switch (item) {
       case 0:
@@ -159,8 +168,7 @@ class CustomAppBar {
   }
 
   static Future _pushToCustomGallery(BuildContext context) =>
-  pushToPage(context, page: const CustomGalleryDisplay());
-
+      pushToPage(context, page: const CustomGalleryDisplay());
 
   static AppBar chattingAppBar(
       UserPersonalInfo userInfo, BuildContext context) {
@@ -170,11 +178,13 @@ class CustomAppBar {
       title: Row(
         children: [
           CircleAvatar(
-              child: ClipOval(
-                  child: NetworkImageDisplay(
+            radius: 17,
+            child: ClipOval(
+              child: NetworkImageDisplay(
                 imageUrl: userInfo.profileImageUrl,
-              )),
-              radius: 17),
+              ),
+            ),
+          ),
           const SizedBox(width: 15),
           Text(
             userInfo.name,

@@ -20,7 +20,6 @@ import 'package:instagram/presentation/cubit/follow/follow_cubit.dart';
 import 'package:instagram/presentation/cubit/notification/notification_cubit.dart';
 import 'package:instagram/presentation/cubit/postInfoCubit/postLikes/post_likes_cubit.dart';
 import 'package:instagram/presentation/cubit/postInfoCubit/post_cubit.dart';
-
 import 'package:instagram/presentation/pages/comments/comments_for_mobile.dart';
 import 'package:instagram/presentation/pages/time_line/my_own_time_line/update_post_info.dart';
 import 'package:instagram/presentation/pages/video/play_this_video.dart';
@@ -29,20 +28,18 @@ import 'package:instagram/presentation/widgets/belong_to/comments_w/comment_of_p
 import 'package:instagram/presentation/widgets/belong_to/profile_w/which_profile_page.dart';
 import 'package:instagram/presentation/widgets/belong_to/profile_w/bottom_sheet.dart';
 import 'package:instagram/presentation/widgets/belong_to/time_line_w/image_slider.dart';
-import 'package:instagram/presentation/widgets/belong_to/time_line_w/picture_viewer.dart';
 import 'package:instagram/presentation/widgets/belong_to/time_line_w/points_scroll_bar.dart';
-import 'package:instagram/presentation/widgets/global/others/share_button.dart';
 import 'package:instagram/presentation/widgets/global/aimation/like_popup_animation.dart';
 import 'package:instagram/presentation/widgets/global/circle_avatar_image/circle_avatar_name.dart';
 import 'package:instagram/presentation/widgets/global/circle_avatar_image/circle_avatar_of_profile_image.dart';
 import 'package:instagram/presentation/widgets/global/custom_widgets/custom_network_image_display.dart';
 import 'package:instagram/presentation/widgets/global/others/count_of_likes.dart';
+import 'package:instagram/presentation/widgets/global/others/share_button.dart';
 import 'package:instagram/presentation/widgets/global/popup_widgets/common/jump_arrow.dart';
 import 'package:instagram/presentation/widgets/global/popup_widgets/common/volume_icon.dart';
 import 'package:instagram/presentation/widgets/global/popup_widgets/web/menu_card.dart';
 
-// import 'package:sliding_sheet/sliding_sheet.dart';
-
+// ignore: must_be_immutable
 class ImageOfPost extends StatefulWidget {
   final ValueNotifier<Post> postInfo;
   bool playTheVideo;
@@ -74,7 +71,7 @@ class ImageOfPost extends StatefulWidget {
 }
 
 class _ImageOfPostState extends State<ImageOfPost>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   final ValueNotifier<TextEditingController> commentTextController =
       ValueNotifier(TextEditingController());
   ValueChanged<Post>? selectedPostInfo;
@@ -82,15 +79,36 @@ class _ImageOfPostState extends State<ImageOfPost>
   ValueNotifier<bool> isSaved = ValueNotifier(false);
   ValueNotifier<int> initPosition = ValueNotifier(0);
   bool showCommentBox = false;
-  bool soundOn = true;
+  bool isSoundOn = true;
 
   bool isLiked = false;
   bool isHeartAnimation = false;
   late UserPersonalInfo myPersonalInfo;
+  TransformationController controller = TransformationController();
+  late AnimationController animationController;
+  Animation<Matrix4>? animation;
+  OverlayEntry? entry;
+
   @override
   void initState() {
-    myPersonalInfo = FirestoreUserInfoCubit.getMyPersonalInfo(context);
+    myPersonalInfo = UserInfoCubit.getMyPersonalInfo(context);
+    animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    )
+      ..addListener(() => controller.value = animation!.value)
+      ..addStatusListener((status) {
+        entry?.remove();
+        entry = null;
+      });
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    animationController.dispose();
+    controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -103,9 +121,8 @@ class _ImageOfPostState extends State<ImageOfPost>
   pushToProfilePage(Post postInfo) {
     if (widget.popupWebContainer) {
       Navigator.of(context).maybePop();
-      
     }
-   return pushToPage(context,
+    return pushToPage(context,
         page: WhichProfilePage(userId: postInfo.publisherId));
   }
 
@@ -183,7 +200,7 @@ class _ImageOfPostState extends State<ImageOfPost>
         commentButton(context, postInfoValue),
         ShareButton(postInfo: ValueNotifier(postInfoValue)),
         const Spacer(),
-        if (postInfoValue.imagesUrls.isNotEmpty && showScrollBar)
+        if (postInfoValue.imagesUrls.length > 1 && showScrollBar)
           scrollBar(postInfoValue),
         const Spacer(),
         const Spacer(),
@@ -246,6 +263,7 @@ class _ImageOfPostState extends State<ImageOfPost>
         int index =
             isThatBack ? widget.indexOfPost - 1 : widget.indexOfPost + 1;
         await Navigator.of(context).maybePop();
+        if (!mounted) return;
         Navigator.of(context).push(
           HeroDialogRoute(
             builder: (context) => ImageOfPost(
@@ -504,23 +522,6 @@ class _ImageOfPostState extends State<ImageOfPost>
               }
             });
           },
-          onTap: () async {
-            if (isThatMobile) {
-              pushToPage(context,
-                  page: ValueListenableBuilder(
-                    valueListenable: initPosition,
-                    builder: (context, int positionValue, child) =>
-                        PictureViewer(
-                      blurHash: postInfo.blurHash,
-                      aspectRatio: postInfo.aspectRatio,
-                      isThatImage: postInfo.isThatImage,
-                      imageUrl: postInfo.postUrl.isNotEmpty
-                          ? postInfo.postUrl
-                          : postInfo.imagesUrls[positionValue],
-                    ),
-                  ));
-            }
-          },
           child: Padding(
             padding: const EdgeInsetsDirectional.only(top: 8.0),
             child: postInfo.isThatImage
@@ -532,37 +533,31 @@ class _ImageOfPostState extends State<ImageOfPost>
                         updateImageIndex: _updateImageIndex,
                         showPointsScrollBar: widget.popupWebContainer,
                       )
-                    : Hero(
-                        tag: postInfo.postUrl,
-                        child: NetworkImageDisplay(
-                          blurHash: postInfo.blurHash,
-                          aspectRatio: postInfo.aspectRatio,
-                          imageUrl: postInfo.postUrl,
-                        ),
-                      ))
+                    : buildSingleImage(postInfo))
                 : Stack(
-                    alignment: Alignment.bottomCenter,
+                    alignment: Alignment.center,
                     children: [
                       PlayThisVideo(
                           videoUrl: postInfo.postUrl,
                           play: widget.playTheVideo,
-                          withoutSound: !soundOn),
+                          withoutSound: !isSoundOn),
                       if (!widget.playTheVideo)
-                        const Align(
+                        Align(
                           alignment: Alignment.center,
                           child: Icon(
                             Icons.play_arrow_rounded,
                             color: ColorManager.white,
-                            size: 200,
+                            size: isThatMobile ? 100 : 200,
                           ),
                         ),
-                      Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Align(
-                          alignment: Alignment.bottomRight,
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.all(15.0),
                           child: GestureDetector(
-                            onTap: () => setState(() => soundOn = !soundOn),
-                            child: VolumeIcon(isVolumeOn: soundOn),
+                            onTap: () => setState(() => isSoundOn = !isSoundOn),
+                            child: VolumeIcon(isVolumeOn: isSoundOn),
                           ),
                         ),
                       )
@@ -582,6 +577,52 @@ class _ImageOfPostState extends State<ImageOfPost>
         ),
       ],
     );
+  }
+
+  Builder buildSingleImage(Post postInfo) {
+    return Builder(builder: (context) {
+      return InteractiveViewer(
+        transformationController: controller,
+        panEnabled: false,
+        clipBehavior: Clip.none,
+        minScale: 1,
+        maxScale: 4,
+        onInteractionStart: (details) {
+          if (details.pointerCount < 2) return;
+          makeImageUnbounded(context, postInfo);
+        },
+        onInteractionEnd: (details) => resetAnimation(),
+        child: NetworkImageDisplay(
+          blurHash: postInfo.blurHash,
+          aspectRatio: postInfo.aspectRatio,
+          imageUrl: postInfo.postUrl,
+        ),
+      );
+    });
+  }
+
+  void makeImageUnbounded(BuildContext context, Post postInfo) {
+    final renderBox = context.findRenderObject() as RenderBox;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    final size = MediaQuery.of(context).size;
+    entry = OverlayEntry(
+      builder: (context) => Positioned(
+          left: offset.dx,
+          top: offset.dy,
+          width: size.width,
+          child: buildSingleImage(postInfo)),
+    );
+    final overlay = Overlay.of(context)!;
+    overlay.insert(entry!);
+  }
+
+  void resetAnimation() {
+    animation = Matrix4Tween(
+      begin: controller.value,
+      end: Matrix4.identity(),
+    ).animate(CurvedAnimation(
+        parent: animationController, curve: Curves.easeInOutQuart));
+    animationController.forward(from: 0);
   }
 
   void _updateImageIndex(int index, _) {
@@ -747,11 +788,11 @@ class _ImageOfPostState extends State<ImageOfPost>
         child: GestureDetector(
           child: isSavedValue
               ? Icon(
-                  Icons.bookmark,
+                  Icons.bookmark_border,
                   color: Theme.of(context).focusColor,
                 )
               : Icon(
-                  Icons.bookmark_border,
+                  Icons.bookmark,
                   color: Theme.of(context).focusColor,
                 ),
           onTap: () {
@@ -762,7 +803,6 @@ class _ImageOfPostState extends State<ImageOfPost>
     );
   }
 
-  
   Padding commentButton(BuildContext context, Post postInfoValue) {
     return Padding(
       padding: const EdgeInsetsDirectional.only(start: 5),
@@ -770,7 +810,7 @@ class _ImageOfPostState extends State<ImageOfPost>
         child: iconsOfImagePost(IconsAssets.commentIcon),
         onTap: () {
           if (isThatMobile) {
-           pushToPage(context,
+            pushToPage(context,
                 page: CommentsPageForMobile(postInfo: postInfoValue));
           } else {
             if (!widget.popupWebContainer) {

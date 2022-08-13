@@ -1,26 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/core/resources/color_manager.dart';
-import 'package:instagram/core/utility/constant.dart';
 import 'package:video_player/video_player.dart';
 
 class PlayThisVideo extends StatefulWidget {
   final String videoUrl;
   final bool play;
-  final bool dispose;
   final bool withoutSound;
 
-  const PlayThisVideo(
-      {Key? key,
-      required this.videoUrl,
-      this.withoutSound = false,
-      required this.play,
-      this.dispose = true})
-      : super(key: key);
+  const PlayThisVideo({
+    Key? key,
+    required this.videoUrl,
+    this.withoutSound = false,
+    required this.play,
+  }) : super(key: key);
   @override
-  _PlayThisVideoState createState() => _PlayThisVideoState();
+  PlayThisVideoState createState() => PlayThisVideoState();
 }
 
-class _PlayThisVideoState extends State<PlayThisVideo> {
+class PlayThisVideoState extends State<PlayThisVideo> {
   late VideoPlayerController _controller;
   late Future<void> _initializeVideoPlayerFuture;
 

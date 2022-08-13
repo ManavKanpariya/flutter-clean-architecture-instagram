@@ -33,9 +33,9 @@ class _GetMyPersonalInfoState extends State<GetMyPersonalInfo> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<FirestoreUserInfoCubit, FirestoreUserInfoState>(
-      bloc: FirestoreUserInfoCubit.get(context)
-        ..getUserInfo(widget.myPersonalId),
+    return BlocBuilder<UserInfoCubit, FirestoreUserInfoState>(
+      bloc: UserInfoCubit.get(context)
+        ..getUserInfo(widget.myPersonalId,getDeviceToken: true),
       builder: (context, userState) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (userState is CubitMyPersonalInfoLoaded) {

@@ -161,4 +161,3 @@ typedef IsInViewPortCondition = bool Function(
   double deltaBottom,
   double viewPortDimension,
 );
-

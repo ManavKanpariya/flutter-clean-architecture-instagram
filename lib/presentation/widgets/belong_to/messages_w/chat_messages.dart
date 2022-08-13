@@ -25,7 +25,6 @@ import 'package:instagram/presentation/cubit/firestoreUserInfoCubit/message/cubi
 import 'package:instagram/presentation/customPackages/audio_recorder/social_media_recoder.dart';
 import 'package:instagram/presentation/pages/profile/user_profile_page.dart';
 import 'package:instagram/presentation/widgets/belong_to/messages_w/record_view.dart';
-import 'package:instagram/presentation/widgets/belong_to/time_line_w/picture_viewer.dart';
 import 'package:instagram/presentation/widgets/global/circle_avatar_image/circle_avatar_of_profile_image.dart';
 import 'package:instagram/presentation/widgets/global/custom_widgets/custom_circulars_progress.dart';
 import 'package:instagram/presentation/widgets/global/custom_widgets/custom_linears_progress.dart';
@@ -92,8 +91,8 @@ class _ChatMessagesState extends State<ChatMessages>
   }
 
   getLanguage() async {
-    AppPreferences _appPreferences = injector<AppPreferences>();
-    currentLanguage = await _appPreferences.getAppLanguage();
+    AppPreferences appPreferences = injector<AppPreferences>();
+    currentLanguage = await appPreferences.getAppLanguage();
   }
 
   @override
@@ -420,23 +419,36 @@ class _ChatMessagesState extends State<ChatMessages>
                 Container(
                   color: Theme.of(context).toggleableActiveColor,
                   width: double.infinity,
-                  child:NetworkImageDisplay(
+                  child: NetworkImageDisplay(
                     blurHash: messageInfo.blurHash,
                     imageUrl: messageInfo.imageUrl,
                     height: 270,
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: Icon(
-                      Icons.collections_rounded,
-                      size: 20,
-                      color: Colors.white,
+                if (messageInfo.multiImages)
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      child: Icon(
+                        Icons.collections_rounded,
+                        size: 20,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
+                if (messageInfo.isThatVideo)
+                  const Padding(
+                    padding: EdgeInsets.all(2.0),
+                    child: Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Icon(
+                        Icons.slow_motion_video_sharp,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
               ],
             ),
             _createActionBar(messageInfo),
@@ -460,6 +472,7 @@ class _ChatMessagesState extends State<ChatMessages>
             backgroundImage: messageInfo.imageUrl.isNotEmpty
                 ? CachedNetworkImageProvider(messageInfo.profileImageUrl)
                 : null,
+            radius: 15,
             child: messageInfo.imageUrl.isEmpty
                 ? Icon(
                     Icons.person,
@@ -467,7 +480,6 @@ class _ChatMessagesState extends State<ChatMessages>
                     size: 15,
                   )
                 : null,
-            radius: 15,
           ),
           const SizedBox(width: 7),
           Text(
@@ -498,9 +510,7 @@ class _ChatMessagesState extends State<ChatMessages>
                 : "${messageInfo.message} ${messageInfo.userNameOfSharedPost}",
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: getNormalStyle(
-              color: ColorManager.black,
-            ),
+            style: getNormalStyle(color: Theme.of(context).focusColor),
           ),
         ],
       ),
@@ -523,30 +533,22 @@ class _ChatMessagesState extends State<ChatMessages>
 
   SizedBox imageMessage(Message messageInfo, String imageUrl) {
     return SizedBox(
-        height: isThatMobile ? 150 : 300,
-        width: isThatMobile ? 90 : 210,
-        child: messageInfo.messageUid.isNotEmpty
-            ? GestureDetector(
-                onTap: () async {
-                  pushToPage(context,
-                      page: PictureViewer(
-                          blurHash: messageInfo.blurHash, imageUrl: imageUrl),
-                      withoutRoot: false);
-                },
-                child: Hero(
-                  tag: imageUrl,
-                  child: NetworkImageDisplay(
-                    blurHash: messageInfo.blurHash,
-                    imageUrl: imageUrl,
-                  ),
-                ),
-              )
-            : ValueListenableBuilder(
-                valueListenable: newMessageInfo,
-                builder: (context, Message? newMessageValue, child) =>
-                    Image.memory(newMessageValue!.localImage!,
-                        fit: BoxFit.cover),
-              ));
+      height: isThatMobile ? 150 : 300,
+      width: isThatMobile ? 90 : 210,
+      child: messageInfo.messageUid.isNotEmpty
+          ? Hero(
+              tag: imageUrl,
+              child: NetworkImageDisplay(
+                blurHash: messageInfo.blurHash,
+                imageUrl: imageUrl,
+              ),
+            )
+          : ValueListenableBuilder(
+              valueListenable: newMessageInfo,
+              builder: (context, Message? newMessageValue, child) =>
+                  Image.memory(newMessageValue!.localImage!, fit: BoxFit.cover),
+            ),
+    );
   }
 
   Text textMessage(String message, bool isThatMine) {
@@ -815,6 +817,7 @@ class _ChatMessagesState extends State<ChatMessages>
                           messageInfo:
                               newMessage(blurHash: blurHash, isThatImage: true),
                           pathOfPhoto: pickImage);
+
                       scrollToLastIndex(context);
                     } else {
                       ToastShow.toast(StringsManager.noImageSelected.tr());
@@ -822,12 +825,12 @@ class _ChatMessagesState extends State<ChatMessages>
                   },
                   child: const CircleAvatar(
                       backgroundColor: ColorManager.darkBlue,
+                      radius: 18,
                       child: ClipOval(
                           child: Icon(
                         Icons.camera_alt,
                         color: ColorManager.white,
-                      )),
-                      radius: 18),
+                      ))),
                 ),
               ),
             ));
@@ -940,11 +943,11 @@ class _ChatMessagesState extends State<ChatMessages>
 
   CircleAvatar circleAvatarOfImage() {
     return CircleAvatar(
+        radius: 45,
         child: ClipOval(
             child: NetworkImageDisplay(
           imageUrl: widget.userInfo.profileImageUrl,
-        )),
-        radius: 45);
+        )));
   }
 
   Row userName() {

@@ -15,7 +15,7 @@ class FirestorePostRepositoryImpl implements FirestorePostRepository {
     try {
       for (int i = 0; i < files.length; i++) {
         String postUrl =
-                await FirebaseStoragePost.uploadFile(files[i], 'postsImage');
+            await FirebaseStoragePost.uploadFile(files[i], 'postsImage');
         if (i == 0) postInfo.postUrl = postUrl;
         postInfo.imagesUrls.add(postUrl);
       }
@@ -44,9 +44,9 @@ class FirestorePostRepositoryImpl implements FirestorePostRepository {
   }
 
   @override
-  Future<List<Post>> getAllPostsInfo() async {
+  Future<List<Post>> getAllPostsInfo({bool isVideosWantedOnly=false,String skippedVideoUid = ""}) async {
     try {
-      return await FirestorePost.getAllPostsInfo();
+      return await FirestorePost.getAllPostsInfo(isVideosWantedOnly: isVideosWantedOnly);
     } catch (e) {
       return Future.error(e.toString());
     }
