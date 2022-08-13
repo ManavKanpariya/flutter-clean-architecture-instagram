@@ -788,11 +788,11 @@ class _ImageOfPostState extends State<ImageOfPost>
         child: GestureDetector(
           child: isSavedValue
               ? Icon(
-                  Icons.bookmark_border,
+                  Icons.bookmark,
                   color: Theme.of(context).focusColor,
                 )
               : Icon(
-                  Icons.bookmark,
+                  Icons.bookmark_border,
                   color: Theme.of(context).focusColor,
                 ),
           onTap: () {
