@@ -22,7 +22,7 @@ import 'package:instagram/presentation/cubit/firestoreUserInfoCubit/message/bloc
 import 'package:instagram/presentation/cubit/firestoreUserInfoCubit/message/cubit/message_cubit.dart';
 import 'package:instagram/presentation/customPackages/audio_recorder/social_media_recoder.dart';
 import 'package:instagram/presentation/pages/profile/user_profile_page.dart';
-import 'package:instagram/presentation/widgets/belong_to/messages_w/chat_page_component/shared_message.dart';
+//import 'package:instagram/presentation/widgets/belong_to/messages_w/chat_page_component/shared_message.dart';
 import 'package:instagram/presentation/widgets/belong_to/messages_w/record_view.dart';
 import 'package:instagram/presentation/widgets/global/circle_avatar_image/circle_avatar_of_profile_image.dart';
 import 'package:instagram/presentation/widgets/global/custom_widgets/custom_circulars_progress.dart';
@@ -900,4 +900,7 @@ class _ChatMessagesState extends State<ChatMessages>
               fontWeight: FontWeight.normal)),
     );
   }
+}
+
+SharedMessage({required Message messageInfo, required bool isThatMine, required String currentLanguage}) {
 }
