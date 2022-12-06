@@ -224,4 +224,12 @@ class FirestoreUser {
           return userInfo;
         }).toList());
   }
+
+  static clearChannelsIds({required String userId, required String myPersonalId}) {}
+
+  static updateChannelId({required String userId, required String channelId, required myPersonalId}) {}
+
+  static cancelJoiningToRoom(String userId) {}
+
+  static getCallingStatus({required String userId}) {}
 }
